@@ -19,45 +19,29 @@ namespace PoGo_Proxy.Sample
         private static List<Tuple<RequestType, string>> _outputMessages;
         private static Dictionary<ulong, NearbyPokemon> _nearbyPokemon;
 
-        private static HashSet<string> _hostsToLog=new HashSet<string> {"sso.pokemon.com", "pgorelease.nianticlabs.com" };
-
         private static void Main()
         {
             _apiLog = new List<RequestHandledEventArgs>();
             _outputMessages = new List<Tuple<RequestType, string>>();
             _nearbyPokemon = new Dictionary<ulong, NearbyPokemon>();
 
-            Console.WriteLine("Hit any key to stop the proxy and exit..");
+            Console.WriteLine("Hit any key to stop proxy..");
             Console.WriteLine();
 
-            var controller = new ProxyController("0.0.0.0", 8080) { Out = Console.Out };
+            var controller = new ProxyController("0.0.0.0", 61212) {Out = Console.Out};
 
-            controller.RequestCompleted += Controller_RequestCompleted;
-            controller.RequestSent += Controller_RequestSent;
+            controller.RequestHandled += Controller_RequestHandled;
 
             controller.Start();
             Console.ReadKey();
             controller.Stop();
 
+            Console.WriteLine("Hit any key to save log of requests and responses and exit..");
+            Console.ReadKey();
 
-        }
-
-        private static void Controller_RequestSent(PoGoWebSession webSession)
-        {
-            if(!_hostsToLog.Contains(webSession.RawRequest.RequestUri.Host)) return;
-
-            Console.WriteLine(webSession.Uri + " Request Sent.");
-            if (webSession.RequestBlock != null)
-                Console.WriteLine(string.Join(Environment.NewLine, webSession.RequestBlock.ParsedMessages.Keys));
-        }
-
-        private static void Controller_RequestCompleted(PoGoWebSession webSession)
-        {
-            if (!_hostsToLog.Contains(webSession.RawRequest.RequestUri.Host)) return;
-
-            Console.WriteLine(webSession.Uri + " Request Completed.");
-            if(webSession.ResponseBlock!=null)
-            Console.WriteLine(string.Join(Environment.NewLine, webSession.ResponseBlock.ParsedMessages.Keys));
+            // Log requests and responses
+            File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), DateTime.Now.ToString("yy-MM-dd-hh-mm") + "-log.json"),
+                JsonConvert.SerializeObject(_apiLog, Formatting.Indented, new StringEnumConverter()));
         }
 
         private static void Controller_RequestHandled(object sender, RequestHandledEventArgs e)
@@ -71,7 +55,7 @@ namespace PoGo_Proxy.Sample
                 switch (responsePair.Key)
                 {
                     case RequestType.GetMapObjects:
-                        ParseMapObject((GetMapObjectsResponse)responsePair.Value);
+                        ParseMapObject((GetMapObjectsResponse) responsePair.Value);
                         continue;
                     case RequestType.DownloadSettings:
                     case RequestType.GetAssetDigest:
@@ -131,90 +115,90 @@ namespace PoGo_Proxy.Sample
                     break;
 
                 case RequestType.GetPlayer:
+                {
+                    var response = (GetPlayerResponse) responsePair.Value;
+                    if (response.Success)
                     {
-                        var response = (GetPlayerResponse)responsePair.Value;
-                        if (response.Success)
+                        sb.AppendLine($"    Name: {response.PlayerData.Username}");
+                        foreach (var currencyPair in response.PlayerData.Currencies)
                         {
-                            sb.AppendLine($"    Name: {response.PlayerData.Username}");
-                            foreach (var currencyPair in response.PlayerData.Currencies)
-                            {
-                                sb.AppendLine($"    {currencyPair.Name}: {currencyPair.Amount}");
-                            }
+                            sb.AppendLine($"    {currencyPair.Name}: {currencyPair.Amount}");
                         }
-                        break;
                     }
+                    break;
+                }
                 case RequestType.GetHatchedEggs:
+                {
+                    var response = (GetHatchedEggsResponse) responsePair.Value;
+                    if (response.Success)
                     {
-                        var response = (GetHatchedEggsResponse)responsePair.Value;
-                        if (response.Success)
+                        if (response.PokemonId.Count == 0) sb.AppendLine("    No hatched eggs");
+                        for (int i = 0; i < response.PokemonId.Count; i++)
                         {
-                            if (response.PokemonId.Count == 0) sb.AppendLine("    No hatched eggs");
-                            for (var i = 0; i < response.PokemonId.Count; i++)
-                            {
-                                sb.AppendLine($"    Egg {i}: ");
-                                sb.AppendLine("      PokemonId: " + response.PokemonId[i]);
-                                sb.AppendLine("      ExperienceAwarded: " + response.ExperienceAwarded[i]);
-                                sb.AppendLine("      CandyAwarded: " + response.CandyAwarded[i]);
-                                sb.AppendLine("      StardustAwarded: " + response.StardustAwarded[i]);
-                            }
+                            sb.AppendLine($"    Egg {i}: ");
+                            sb.AppendLine("      PokemonId: " + response.PokemonId[i]);
+                            sb.AppendLine("      ExperienceAwarded: " + response.ExperienceAwarded[i]);
+                            sb.AppendLine("      CandyAwarded: " + response.CandyAwarded[i]);
+                            sb.AppendLine("      StardustAwarded: " + response.StardustAwarded[i]);
                         }
-                        break;
                     }
+                    break;
+                }
                 case RequestType.GetInventory:
+                {
+                    var response = (GetInventoryResponse) responsePair.Value;
+                    if (response.Success)
                     {
-                        var response = (GetInventoryResponse)responsePair.Value;
-                        if (response.Success)
-                        {
-                            sb.AppendLine("    lots of data to parse");
-                        }
-                        break;
+                        sb.AppendLine("    lots of data to parse");
                     }
+                    break;
+                }
                 case RequestType.CheckAwardedBadges: // TODO should this be GetAwardedBadges in POGOProtocs?
-                    {
-                        var response = (CheckAwardedBadgesResponse)responsePair.Value;
-                        if (response.Success)
+                {
+                    var response = (CheckAwardedBadgesResponse) responsePair.Value;
+                    if (response.Success)
                         {
                             if (response.AwardedBadges.Count == 0) sb.AppendLine("    No awarded badges");
-                            for (var i = 0; i < response.AwardedBadges.Count; i++)
-                            {
-                                sb.AppendLine($"    Badge {i}: ");
-                                sb.AppendLine("      AwardedBadges: " + response.AwardedBadges[i]);
-                                sb.AppendLine("      AwardedBadgeLevels: " + response.AwardedBadgeLevels[i]);
-                            }
-                        }
-                        break;
-                    }
-                case RequestType.GetGymDetails:
-                    {
-                        var response = (GetGymDetailsResponse)responsePair.Value;
-
-                        if (response.Result == GetGymDetailsResponse.Types.Result.Success)
+                            for (int i = 0; i < response.AwardedBadges.Count; i++)
                         {
-                            sb.AppendLine($"    Name: {response.Name}");
-                            sb.AppendLine($"    Id: {response.GymState.FortData.Id}");
+                            sb.AppendLine($"    Badge {i}: ");
+                            sb.AppendLine("      AwardedBadges: " + response.AwardedBadges[i]);
+                            sb.AppendLine("      AwardedBadgeLevels: " + response.AwardedBadgeLevels[i]);
                         }
-                        break;
                     }
+                    break;
+                }
+                case RequestType.GetGymDetails:
+                {
+                    var response = (GetGymDetailsResponse) responsePair.Value;
+
+                    if (response.Result == GetGymDetailsResponse.Types.Result.Success)
+                    {
+                        sb.AppendLine($"    Name: {response.Name}");
+                        sb.AppendLine($"    Id: {response.GymState.FortData.Id}");
+                    }
+                    break;
+                }
                 case RequestType.Encounter:
-                    {
-                        var response = (EncounterResponse)responsePair.Value;
+                {
+                    var response = (EncounterResponse) responsePair.Value;
 
-                        sb.AppendLine("    PokemonId: " + response.WildPokemon.PokemonData.PokemonId);
-                        sb.AppendLine("    IndividualAttack: " + response.WildPokemon.PokemonData.IndividualAttack);
-                        sb.AppendLine("    IndividualDefense: " + response.WildPokemon.PokemonData.IndividualDefense);
-                        sb.AppendLine("    IndividualStamina: " + response.WildPokemon.PokemonData.IndividualStamina);
-                        break;
-                    }
+                    sb.AppendLine("    PokemonId: " + response.WildPokemon.PokemonData.PokemonId);
+                    sb.AppendLine("    IndividualAttack: " + response.WildPokemon.PokemonData.IndividualAttack);
+                    sb.AppendLine("    IndividualDefense: " + response.WildPokemon.PokemonData.IndividualDefense);
+                    sb.AppendLine("    IndividualStamina: " + response.WildPokemon.PokemonData.IndividualStamina);
+                    break;
+                }
                 case RequestType.DiskEncounter:
-                    {
-                        var response = (DiskEncounterResponse)responsePair.Value;
+                {
+                    var response = (DiskEncounterResponse) responsePair.Value;
 
-                        sb.AppendLine("    PokemonId: " + response.PokemonData.PokemonId);
-                        sb.AppendLine("    IndividualAttack: " + response.PokemonData.IndividualAttack);
-                        sb.AppendLine("    IndividualDefense: " + response.PokemonData.IndividualDefense);
-                        sb.AppendLine("    IndividualStamina: " + response.PokemonData.IndividualStamina);
-                        break;
-                    }
+                    sb.AppendLine("    PokemonId: " + response.PokemonData.PokemonId);
+                    sb.AppendLine("    IndividualAttack: " + response.PokemonData.IndividualAttack);
+                    sb.AppendLine("    IndividualDefense: " + response.PokemonData.IndividualDefense);
+                    sb.AppendLine("    IndividualStamina: " + response.PokemonData.IndividualStamina);
+                    break;
+                }
             }
             return sb.ToString();
         }

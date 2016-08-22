@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Threading.Tasks;
 using Google.Protobuf;
 using Newtonsoft.Json;
@@ -12,23 +11,19 @@ using POGOProtos.Networking.Envelopes;
 using POGOProtos.Networking.Requests;
 using Titanium.Web.Proxy;
 using Titanium.Web.Proxy.EventArguments;
-using Titanium.Web.Proxy.Exceptions;
+using Titanium.Web.Proxy.Http;
+using Titanium.Web.Proxy.Http.Responses;
 using Titanium.Web.Proxy.Models;
+using Request = POGOProtos.Networking.Requests.Request;
 
 namespace PoGo_Proxy
 {
     public sealed class ProxyController
     {
-        public delegate void RequestSentEventHandler(PoGoWebSession webSession);
-        public delegate void RequestCompletedEventHandler(PoGoWebSession webSession);
-
-        private Dictionary<string, PoGoWebSession> _webSessions = new Dictionary<string, PoGoWebSession>();
-        public List<PoGoWebSession> WebSessions = new List<PoGoWebSession>();
         private readonly ProxyServer _proxyServer;
-        //        private readonly Dictionary<ulong, RequestHandledEventArgs> _apiBlocks;
+        private readonly Dictionary<ulong, RequestHandledEventArgs> _apiBlocks;
 
-        public event RequestSentEventHandler RequestSent;
-        public event RequestCompletedEventHandler RequestCompleted;
+        public event EventHandler<RequestHandledEventArgs> RequestHandled;
 
         public string Ip { get; }
         public int Port { get; }
@@ -36,10 +31,10 @@ namespace PoGo_Proxy
 
         public ProxyController(string ipAddress, int port)
         {
-            _proxyServer = new ProxyServer("POGO Proxy.Net CA", "POGO Proxy");
+            _proxyServer = new ProxyServer();
             //_proxyServer.RootCertificateIssuerName = "PoGoProxy";
             //_proxyServer.RootCertificateName = "PoGoProxy Root CA";
-            //_apiBlocks = new Dictionary<ulong, RequestHandledEventArgs>();
+            _apiBlocks = new Dictionary<ulong, RequestHandledEventArgs>();
 
             Ip = ipAddress;
             Port = port;
@@ -81,80 +76,101 @@ namespace PoGo_Proxy
             if (Out != StreamWriter.Null) Out.WriteLine("[---] Proxy stopped");
         }
 
+        private static X509Certificate2 GetCertificateFromStore()
+        {
+
+            // Get the certificate store for the current user.
+            X509Store store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
+            try
+            {
+                store.Open(OpenFlags.ReadOnly);
+
+                // Place all certificates in an X509Certificate2Collection object.
+                X509Certificate2Collection certCollection = store.Certificates;
+                foreach (var cert in certCollection)
+                {
+                    if (cert.SubjectName.Name != null &&
+                        cert.SubjectName.Name.Contains("Titanium Root"))
+                    {
+                        return cert;
+                    }
+                }
+                return null;
+                //var cert = certCollection.Find(X509FindType.FindBySubjectName, )
+                // If using a certificate with a trusted root you do not need to FindByTimeValid, instead:
+                // currentCerts.Find(X509FindType.FindBySubjectDistinguishedName, certName, true);
+                //X509Certificate2Collection currentCerts = certCollection.Find(X509FindType.FindByTimeValid, DateTime.Now, false);
+                //X509Certificate2Collection signingCert = currentCerts.Find(X509FindType.FindBySubjectDistinguishedName, certName, false);
+                //if (signingCert.Count == 0)
+                //    return null;
+                //// Return the first certificate in the collection, has the right name and is current.
+                //return signingCert[0];
+            }
+            finally
+            {
+                store.Close();
+            }
+
+        }
 
         private async Task OnRequest(object sender, SessionEventArgs e)
         {
-            switch (e.WebSession.Request.RequestUri.PathAndQuery)
+            if (e.WebSession.Request.RequestUri.PathAndQuery == "/install-cert")
             {
-                case "/install-cert":
 
-                    await e.Ok("<html><head><title>Certificate Installation</title></head><body><div style=\"text-align: center; margin-top: 100px;\"><h1><a href=/install-cert-android>Download Certificate</a></h1></div></body></html>");
-                    return;
-                case "/install-cert-android":
-                    try
-                    {
-                        var cert = GetCertificateFromStore();
-                        var pem = ConvertToPem(cert);
-                        var headers = new Dictionary<string, HttpHeader>();
-                        headers.Add("Content-Type", new HttpHeader("Content-Type", "application/x-x509-ca-cert"));
-                        headers.Add("Content-Disposition", new HttpHeader("Content-Disposition", "inline; filename=cert.pfx"));
-                        await e.Ok(pem, headers);
-                    }
-                    catch (Exception ex)
-                    {
-                        Out.WriteLine("An exception occured.");
-                        Out.WriteLine(ex.GetType().Name);
-                        Out.WriteLine(ex.StackTrace);
-                    }
-                    return;
-            }
-            Console.WriteLine(e.WebSession.Request.RequestUri.AbsoluteUri + " Request initialized.");
-
-            var uid = Guid.NewGuid();
-            var pogoWebSession = new PoGoWebSession
-            {
-                RawResponse = e.WebSession.Response,
-                RawRequest = e.WebSession.Request,
-                Guid = uid,
-                Uri = e.WebSession.Request.RequestUri.AbsoluteUri
-            };
-            _webSessions.Add(uid.ToString(), pogoWebSession);
-
-            e.WebSession.Response.ResponseHeaders.Add("POGO_UID", new HttpHeader("POGO_UID", uid.ToString()));
-
-            try
-            {
-                pogoWebSession.RequestBody = await e.GetRequestBody();
-            }
-            catch (BodyNotFoundException)
-            {
-                OnRequestSent(pogoWebSession);
+                await e.Ok("<html><head><title>Certificate Installation</title></head><body><a href=/install-cert-android>Android</a></body></html>");
                 return;
             }
 
-            if (e.WebSession.Request.RequestUri.Host != "pgorelease.nianticlabs.com")
+            if (e.WebSession.Request.RequestUri.PathAndQuery == "/install-cert-android")
             {
-                OnRequestSent(pogoWebSession);
+                try
+                {
+                    var cert = GetCertificateFromStore();
+                    //var exported = cert.Export(X509ContentType., "1234");
+                    var pem = ConvertToPEM(cert);
+                    //e.WebSession.Response.ResponseHeaders.Clear();
+                    //e.WebSession.Request.RequestHeaders.Remove("Content-Type");
+                    //e.WebSession.Request.RequestHeaders.Add("Content-Type", new HttpHeader("Content-Type", "application/x-x509-ca-cert"));
+                    //e.WebSession.Request.RequestHeaders.Add("Content-Disposition", new HttpHeader("Content-Disposition", "inline; filename=cert.cer"));
+                    //await e.SetResponseBody(exported);
+                    var headers = new Dictionary<string, HttpHeader>();
+                    headers.Add("Content-Type", new HttpHeader("Content-Type", "application/x-x509-ca-cert"));
+                    headers.Add("Content-Disposition", new HttpHeader("Content-Disposition", "inline; filename=cert.pfx"));
+
+                    await e.Ok(pem, headers);
+
+                }
+                catch (Exception ex)
+                {
+                    Out.WriteLine("An exception occured.");
+                    Out.WriteLine(ex.GetType().Name);
+                    Out.WriteLine(ex.StackTrace);
+                }
                 return;
             }
+
+
+            if (e.WebSession.Request.RequestUri.Host != "pgorelease.nianticlabs.com") return;
 
             try
             {
 
                 // Get session data
                 var callTime = DateTime.Now;
+                byte[] bodyBytes;
 
-
-                var codedInputStream = new CodedInputStream(pogoWebSession.RequestBody);
-                var requestEnvelope = RequestEnvelope.Parser.ParseFrom(codedInputStream);
-
-                if (requestEnvelope == null)
+                try
                 {
-                    OnRequestSent(pogoWebSession);
+                    bodyBytes = await e.GetRequestBody();
+                }
+                catch (Exception)
+                {
                     return;
                 }
+                var codedInputStream = new CodedInputStream(bodyBytes);
+                var requestEnvelope = RequestEnvelope.Parser.ParseFrom(codedInputStream);
 
-                pogoWebSession.RequestId = requestEnvelope.RequestId;
                 // Initialize the request block
                 var requestBlock = new MessageBlock
                 {
@@ -163,16 +179,16 @@ namespace PoGo_Proxy
                 };
 
                 // Parse all the requests
-                foreach (var request in requestEnvelope.Requests)
+                foreach (Request request in requestEnvelope.Requests)
                 {
                     // Had to add assembly name to end of typeName string since protocs cs files are in a different assembly
                     var type = Type.GetType("POGOProtos.Networking.Requests.Messages." + request.RequestType + "Message,POGOProtos");
 
                     if (type == null)
                     {
-                        Console.WriteLine("[*] GetType returns null for requestType: " + request.RequestType);
-                        Console.WriteLine("[*] Check if POGOProtos.Networking.Requests.Messages." + request.RequestType + "Message exists.");
-                        Console.WriteLine("[*]");
+                        if (Out != StreamWriter.Null) Out.WriteLine("[*] GetType returns null for requestType: " + request.RequestType);
+                        if (Out != StreamWriter.Null) Out.WriteLine("[*] Check if POGOProtos.Networking.Requests.Messages." + request.RequestType + "Message exists.");
+                        if (Out != StreamWriter.Null) Out.WriteLine("[*]\n");
 
                         requestBlock.ParsedMessages.Add(request.RequestType, default(IMessage));
                     }
@@ -184,91 +200,54 @@ namespace PoGo_Proxy
                         requestBlock.ParsedMessages.Add(request.RequestType, instance);
                     }
                 }
-                pogoWebSession.RequestBlock = requestBlock;
 
-                //// TODO check if there is a double response or if a response already exists
-                //if (_apiBlocks.ContainsKey(requestEnvelope.RequestId))
-                //{
+                // TODO check if there is a double response or if a response already exists
+                if (_apiBlocks.ContainsKey(requestEnvelope.RequestId))
+                {
+                    if (Out != StreamWriter.Null)
+                    {
+                        Out.WriteLine($"[*] Request Id({requestEnvelope.RequestId}) already exists.");
+                        Out.WriteLine($"[*] Old request:\n{_apiBlocks[requestEnvelope.RequestId].RequestBlock}");
+                        Out.WriteLine($"[*] New request:\n{requestBlock}");
+                    }
 
-                //    //Console.WriteLine($"[*] Request Id({requestEnvelope.RequestId}) already exists.");
-                //    //Console.WriteLine($"[*] Old request:\n{_apiBlocks[requestEnvelope.RequestId].RequestBlock}");
-                //    //Console.WriteLine($"[*] New request:\n{requestBlock}");
+                    if (_apiBlocks[requestEnvelope.RequestId].ResponseBlock == null)
+                    {
+                        if (Out != StreamWriter.Null) Out.WriteLine($"[*] Response for the old request doesn't - replacing old request");
+                        _apiBlocks[requestEnvelope.RequestId].RequestBlock = requestBlock;
+                    }
+                    else
+                    {
+                        if (Out != StreamWriter.Null) Out.WriteLine($"[*] Response for the old request exists - do nothing");
+                    }
+                    Out.WriteLine("[*]\n");
+                    return;
+                }
 
-
-                //    if (_apiBlocks[requestEnvelope.RequestId].ResponseBlock == null)
-                //    {
-                //        //Console.WriteLine($"[*] Response for the old request doesn't - replacing old request");
-                //        _apiBlocks[requestEnvelope.RequestId].RequestBlock = requestBlock;
-                //    }
-                //    else
-                //    {
-                //        //Console.WriteLine($"[*] Response for the old request exists - do nothing");
-                //    }
-                //    //Out.WriteLine("[*]\n");
-
-                //    return;
-                //}
-
-                //// Initialize a new request/response paired block and track it to update response
-                //var args = new RequestHandledEventArgs
-                //{
-                //    RequestId = requestEnvelope.RequestId,
-                //    RequestBlock = requestBlock,
-
-                //};
-                //_apiBlocks.Add(args.RequestId, args);
-                OnRequestSent(pogoWebSession);
+                // Initialize a new request/response paired block and track it to update response
+                var args = new RequestHandledEventArgs
+                {
+                    RequestId = requestEnvelope.RequestId,
+                    RequestBlock = requestBlock
+                };
+                _apiBlocks.Add(args.RequestId, args);
             }
             catch (Exception ex)
             {
-                Console.WriteLine("An exception on request handler.");
-                Console.WriteLine(ex.GetType().Name);
-                Console.WriteLine(ex.StackTrace);
+                Out.WriteLine("An exception occured.");
+                Out.WriteLine(ex.GetType().Name);
+                Out.WriteLine(ex.StackTrace);
             }
         }
 
         private async Task OnResponse(object sender, SessionEventArgs e)
         {
-            if (e.WebSession.Request.RequestUri.AbsoluteUri == "https://www.google.com/loc/m/api")
-            {
-                return;
-            }
             if (e.WebSession.Request.RequestUri.PathAndQuery.StartsWith("/install-cert"))
             {
                 return;
             }
 
-            PoGoWebSession pogoWebSession;
-            if (e.WebSession.Response.ResponseHeaders.ContainsKey("POGO_UID") &&
-                _webSessions.ContainsKey(e.WebSession.Response.ResponseHeaders["POGO_UID"].Value))
-            {
-                pogoWebSession = _webSessions[e.WebSession.Response.ResponseHeaders["POGO_UID"].Value];
-            }
-            else
-            {
-                Console.WriteLine("Couldn't find the PoGoWebSession for the response");
-                return;
-            }
-            e.WebSession.Response.ResponseHeaders.Remove("POGO_UID");
-
-
-            try
-            {
-                pogoWebSession.ResponseBody = await e.GetResponseBody();
-                //Console.WriteLine(Encoding.UTF8.GetString(pogoWebSession.ResponseBody));
-                await e.SetResponseBody(pogoWebSession.ResponseBody);
-            }
-            catch (BodyNotFoundException)
-            {
-                OnRequestCompleted(pogoWebSession);
-                return;
-            }
-
-            if (e.WebSession.Request.RequestUri.Host != "pgorelease.nianticlabs.com")
-            {
-                OnRequestCompleted(pogoWebSession);
-                return;
-            }
+            if (e.WebSession.Request.RequestUri.Host != "pgorelease.nianticlabs.com") return;
             if (e.WebSession.Response.ResponseStatusCode == "200")
             {
                 try
@@ -276,8 +255,8 @@ namespace PoGo_Proxy
 
                     // Get session data
                     var callTime = DateTime.Now;
-
-                    var codedInputStream = new CodedInputStream(pogoWebSession.ResponseBody);
+                    byte[] bodyBytes = await e.GetResponseBody();
+                    var codedInputStream = new CodedInputStream(bodyBytes);
                     var responseEnvelope = ResponseEnvelope.Parser.ParseFrom(codedInputStream);
 
                     // Initialize the response block
@@ -286,38 +265,37 @@ namespace PoGo_Proxy
                         MessageInitialized = callTime,
                         ParsedMessages = new Dictionary<RequestType, IMessage>()
                     };
-                    pogoWebSession.ResponseBlock = responseBlock;
+
                     // Grab the paired request
-                    //var args = _apiBlocks[responseEnvelope.RequestId];
+                    var args = _apiBlocks[responseEnvelope.RequestId];
 
                     // Grab request types
-                    var requestTypes = pogoWebSession.RequestBlock.ParsedMessages.Keys.ToList();
+                    var requestTypes = args.RequestBlock.ParsedMessages.Keys.ToList();
 
                     // The case of missmatched requests and responses seems to be a handshake. The inital request sends 5 messages and gets back 2 that are empty bytestrings
-                    if (pogoWebSession.RequestBlock.ParsedMessages.Count != responseEnvelope.Returns.Count)
+                    if (args.RequestBlock.ParsedMessages.Count != responseEnvelope.Returns.Count)
                     {
-                        if ((pogoWebSession.RequestBlock.ParsedMessages.Count == 5 && responseEnvelope.Returns.Count == 2) &&
+                        if ((args.RequestBlock.ParsedMessages.Count == 5 && responseEnvelope.Returns.Count == 2) &&
                             (responseEnvelope.Returns[0].IsEmpty && responseEnvelope.Returns[1].IsEmpty))
                         {
-                            // if (Out != StreamWriter.Null) Out.WriteLine($"[*] Handshake complete\n");
-                            //_apiBlocks.Remove(args.RequestId);
-                            OnRequestCompleted(pogoWebSession);
+                            if (Out != StreamWriter.Null) Out.WriteLine($"[*] Handshake complete\n");
+                            _apiBlocks.Remove(args.RequestId);
                             return;
                         }
 
                         // If there is a case of missmatched requests and responses, and it doesn't look like a handshake, log it
-                        //if (Out != StreamWriter.Null)
-                        //{
-                        //    Out.WriteLine($"[*] Request messages count ({args.RequestBlock.ParsedMessages.Count}) is different than the response messages count ({responseEnvelope.Returns.Count}).");
+                        if (Out != StreamWriter.Null)
+                        {
+                            Out.WriteLine($"[*] Request messages count ({args.RequestBlock.ParsedMessages.Count}) is different than the response messages count ({responseEnvelope.Returns.Count}).");
 
-                        //    Out.WriteLine("Request:");
-                        //    Out.WriteLine(args.RequestBlock);
+                            Out.WriteLine("Request:");
+                            Out.WriteLine(args.RequestBlock);
 
-                        //    Out.WriteLine("Response:");
-                        //    Out.WriteLine("Not sure yet how to read this without knowing what it is.");
+                            Out.WriteLine("Response:");
+                            Out.WriteLine("Not sure yet how to read this without knowing what it is.");
 
-                        //    Out.WriteLine($"[*]\n");
-                        //}
+                            Out.WriteLine($"[*]\n");
+                        }
 
                         // This section converts all of the responses into all of the request types that exist to see which one fits
                         int responseIndex = 0;
@@ -330,54 +308,34 @@ namespace PoGo_Proxy
                             // Parse the responses
                             for (int i = start; i < end; i++)
                             {
-                                Type type = null;
-                                try
-                                {
-                                    type = Type.GetType("POGOProtos.Networking.Responses." + requestTypes[i] + "Response,POGOProtos");
-                                }
-                                catch (Exception)
-                                {
-                                    Console.WriteLine("Couldn't get the type");
-                                    Console.WriteLine("[***] GetType returns null for requestType" + requestTypes[i]);
-                                    Console.WriteLine("[***] Check if POGOProtos.Networking.Requests.Messages." + requestTypes[i] + "Message exists.");
-                                }
-                                if (type != null)
-                                {
-                                    var instance = (IMessage)Activator.CreateInstance(type);
-                                    instance.MergeFrom(responseBytes);
-                                }
+                                var type = Type.GetType("POGOProtos.Networking.Responses." + requestTypes[i] + "Response,POGOProtos");
 
-                                //Out.WriteLine($"[*] Parsing as response {responseIndex} as {requestTypes[i]}");
-                                //Out.WriteLine(JsonConvert.SerializeObject(instance));
+                                var instance = (IMessage)Activator.CreateInstance(type);
+                                instance.MergeFrom(responseBytes);
+
+                                Out.WriteLine($"[*] Parsing as response {responseIndex} as {requestTypes[i]}");
+                                Out.WriteLine(JsonConvert.SerializeObject(instance));
                             }
 
                             responseIndex++;
-                            //Out.WriteLine();
+                            Out.WriteLine();
                         }
-                        //Out.WriteLine($"[*]\n");
+                        Out.WriteLine($"[*]\n");
                     }
 
                     // Parse the responses
                     for (int i = 0; i < responseEnvelope.Returns.Count; i++)
                     {
                         // Had to add assembly name to end of typeName string since protocs.cs files are in a different assembly
-                        Type type = null;
-                        try
-                        {
-                            type = Type.GetType("POGOProtos.Networking.Responses." + requestTypes[i] + "Response,POGOProtos");
-
-                        }
-                        catch (Exception)
-                        {
-                            Console.WriteLine("Couldn't get the type");
-                            Console.WriteLine("[***] GetType returns null for requestType" );
-                            Console.WriteLine("[***] Check if POGOProtos.Networking.Requests.Messages. Message exists.");
-                        }
+                        var type = Type.GetType("POGOProtos.Networking.Responses." + requestTypes[i] + "Response,POGOProtos");
 
                         if (type == null)
                         {
+                            if (Out != StreamWriter.Null) Out.WriteLine("[***] GetType returns null for requestType: " + requestTypes[i]);
+                            if (Out != StreamWriter.Null) Out.WriteLine("[***] Check if POGOProtos.Networking.Requests.Messages." + requestTypes[i] + "Message exists.");
+                            if (Out != StreamWriter.Null) Out.WriteLine("[*]\n");
 
-                            //responseBlock.ParsedMessages.Add(requestTypes[i], default(IMessage));
+                            responseBlock.ParsedMessages.Add(requestTypes[i], default(IMessage));
                         }
                         else
                         {
@@ -389,27 +347,27 @@ namespace PoGo_Proxy
                     }
 
                     // Have not seen this issue yet - here just in case
-                    //if (!_apiBlocks.ContainsKey(responseEnvelope.RequestId))
-                    //{
-
-                    //    Console.WriteLine($"[*] Request doesn't exist with specified RequestId ({responseEnvelope.RequestId}).");
-                    //    Console.WriteLine($"Response:\n{responseBlock}");
-                    //    Console.WriteLine("[*]\n");
-
-                    //}
+                    if (!_apiBlocks.ContainsKey(responseEnvelope.RequestId))
+                    {
+                        if (Out != StreamWriter.Null)
+                        {
+                            Out.WriteLine($"[*] Request doesn't exist with specified RequestId ({responseEnvelope.RequestId}).");
+                            Out.WriteLine($"Response:\n{responseBlock}");
+                            Out.WriteLine("[*]\n");
+                        }
+                    }
 
                     // Remove block from dictionary and invoke event handler
-                    //args.ResponseBlock = responseBlock;
-                    //_apiBlocks.Remove(args.RequestId);
+                    args.ResponseBlock = responseBlock;
+                    _apiBlocks.Remove(args.RequestId);
 
-                    OnRequestCompleted(pogoWebSession);
+                    RequestHandled?.Invoke(this, args);
                 }
                 catch (Exception ex)
                 {
-                    OnRequestCompleted(pogoWebSession);
-                    Console.WriteLine("An exception on response handler occured.");
-                    Console.WriteLine(ex.GetType().Name);
-                    Console.WriteLine(ex.StackTrace);
+                    Out.WriteLine("An exception occured.");
+                    Out.WriteLine(ex.GetType().Name);
+                    Out.WriteLine(ex.StackTrace);
                 }
 
             }
@@ -421,7 +379,7 @@ namespace PoGo_Proxy
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private static Task OnCertificateValidation(object sender, CertificateValidationEventArgs e)
+        private Task OnCertificateValidation(object sender, CertificateValidationEventArgs e)
         {
             //set IsValid to true/false based on Certificate Errors
             if (e.SslPolicyErrors == System.Net.Security.SslPolicyErrors.None)
@@ -437,19 +395,19 @@ namespace PoGo_Proxy
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private static Task OnCertificateSelection(object sender, CertificateSelectionEventArgs e)
+        private Task OnCertificateSelection(object sender, CertificateSelectionEventArgs e)
         {
             return Task.FromResult(0);
         }
 
-        private static string ConvertToPem(X509Certificate2 cert)
+        private static string ConvertToPEM(X509Certificate2 cert)
         {
             if (cert == null)
-                throw new ArgumentNullException(nameof(cert));
+                throw new ArgumentNullException("cert");
 
-            var base64 = Convert.ToBase64String(cert.RawData).Trim();
+            string base64 = Convert.ToBase64String(cert.RawData).Trim();
 
-            var pem = "-----BEGIN CERTIFICATE-----" + Environment.NewLine;
+            string pem = "-----BEGIN CERTIFICATE-----" + Environment.NewLine;
 
             do
             {
@@ -463,35 +421,6 @@ namespace PoGo_Proxy
             return pem;
         }
 
-        private static X509Certificate2 GetCertificateFromStore()
-        {
 
-            // Get the certificate store for the current user.
-            var store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
-            try
-            {
-                store.Open(OpenFlags.ReadOnly);
-                return store.Certificates.Cast<X509Certificate2>().FirstOrDefault(cert => cert.SubjectName.Name != null && cert.SubjectName.Name.Contains("POGO Proxy.Net CA"));
-            }
-            finally
-            {
-                store.Close();
-            }
-
-        }
-
-
-        private void OnRequestCompleted(PoGoWebSession websession)
-        {
-            if (websession == null) return;
-            WebSessions.Add(websession);
-            RequestCompleted?.Invoke(websession);
-        }
-
-        private void OnRequestSent(PoGoWebSession websession)
-        {
-            if (websession == null) return;
-            RequestSent?.Invoke(websession);
-        }
     }
 }
