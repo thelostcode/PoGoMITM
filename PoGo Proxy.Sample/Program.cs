@@ -28,7 +28,7 @@ namespace PoGo_Proxy.Sample
             Console.WriteLine("Hit any key to stop proxy..");
             Console.WriteLine();
 
-            var controller = new ProxyController("192.168.0.19", 61212) {Out = Console.Out};
+            var controller = new ProxyController("0.0.0.0", 61212) {Out = Console.Out};
 
             controller.RequestHandled += Controller_RequestHandled;
 
