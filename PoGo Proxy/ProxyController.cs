@@ -127,7 +127,7 @@ namespace PoGo_Proxy
                 try
                 {
                     var cert = GetCertificateFromStore();
-                    var exported = cert.Export(X509ContentType.Pkcs12, "1234");
+                    //var exported = cert.Export(X509ContentType., "1234");
                     var pem = ConvertToPEM(cert);
                     //e.WebSession.Response.ResponseHeaders.Clear();
                     //e.WebSession.Request.RequestHeaders.Remove("Content-Type");
@@ -138,94 +138,106 @@ namespace PoGo_Proxy
                     headers.Add("Content-Type", new HttpHeader("Content-Type", "application/x-x509-ca-cert"));
                     headers.Add("Content-Disposition", new HttpHeader("Content-Disposition", "inline; filename=cert.pfx"));
 
-                    await e.Ok(exported, headers);
+                    await e.Ok(pem, headers);
 
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-
-                    throw;
+                    Out.WriteLine("An exception occured.");
+                    Out.WriteLine(ex.GetType().Name);
+                    Out.WriteLine(ex.StackTrace);
                 }
                 return;
             }
+
 
             if (e.WebSession.Request.RequestUri.Host != "pgorelease.nianticlabs.com") return;
 
-            // Get session data
-            var callTime = DateTime.Now;
-            byte[] bodyBytes;
-
             try
             {
-                bodyBytes = await e.GetRequestBody();
+
+                // Get session data
+                var callTime = DateTime.Now;
+                byte[] bodyBytes;
+
+                try
+                {
+                    bodyBytes = await e.GetRequestBody();
+                }
+                catch (Exception)
+                {
+                    return;
+                }
+                var codedInputStream = new CodedInputStream(bodyBytes);
+                var requestEnvelope = RequestEnvelope.Parser.ParseFrom(codedInputStream);
+
+                // Initialize the request block
+                var requestBlock = new MessageBlock
+                {
+                    MessageInitialized = callTime,
+                    ParsedMessages = new Dictionary<RequestType, IMessage>()
+                };
+
+                // Parse all the requests
+                foreach (Request request in requestEnvelope.Requests)
+                {
+                    // Had to add assembly name to end of typeName string since protocs cs files are in a different assembly
+                    var type = Type.GetType("POGOProtos.Networking.Requests.Messages." + request.RequestType + "Message,POGOProtos");
+
+                    if (type == null)
+                    {
+                        if (Out != StreamWriter.Null) Out.WriteLine("[*] GetType returns null for requestType: " + request.RequestType);
+                        if (Out != StreamWriter.Null) Out.WriteLine("[*] Check if POGOProtos.Networking.Requests.Messages." + request.RequestType + "Message exists.");
+                        if (Out != StreamWriter.Null) Out.WriteLine("[*]\n");
+
+                        requestBlock.ParsedMessages.Add(request.RequestType, default(IMessage));
+                    }
+                    else
+                    {
+                        var instance = (IMessage)Activator.CreateInstance(type);
+                        instance.MergeFrom(request.RequestMessage);
+
+                        requestBlock.ParsedMessages.Add(request.RequestType, instance);
+                    }
+                }
+
+                // TODO check if there is a double response or if a response already exists
+                if (_apiBlocks.ContainsKey(requestEnvelope.RequestId))
+                {
+                    if (Out != StreamWriter.Null)
+                    {
+                        Out.WriteLine($"[*] Request Id({requestEnvelope.RequestId}) already exists.");
+                        Out.WriteLine($"[*] Old request:\n{_apiBlocks[requestEnvelope.RequestId].RequestBlock}");
+                        Out.WriteLine($"[*] New request:\n{requestBlock}");
+                    }
+
+                    if (_apiBlocks[requestEnvelope.RequestId].ResponseBlock == null)
+                    {
+                        if (Out != StreamWriter.Null) Out.WriteLine($"[*] Response for the old request doesn't - replacing old request");
+                        _apiBlocks[requestEnvelope.RequestId].RequestBlock = requestBlock;
+                    }
+                    else
+                    {
+                        if (Out != StreamWriter.Null) Out.WriteLine($"[*] Response for the old request exists - do nothing");
+                    }
+                    Out.WriteLine("[*]\n");
+                    return;
+                }
+
+                // Initialize a new request/response paired block and track it to update response
+                var args = new RequestHandledEventArgs
+                {
+                    RequestId = requestEnvelope.RequestId,
+                    RequestBlock = requestBlock
+                };
+                _apiBlocks.Add(args.RequestId, args);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return;
+                Out.WriteLine("An exception occured.");
+                Out.WriteLine(ex.GetType().Name);
+                Out.WriteLine(ex.StackTrace);
             }
-            var codedInputStream = new CodedInputStream(bodyBytes);
-            var requestEnvelope = RequestEnvelope.Parser.ParseFrom(codedInputStream);
-
-            // Initialize the request block
-            var requestBlock = new MessageBlock
-            {
-                MessageInitialized = callTime,
-                ParsedMessages = new Dictionary<RequestType, IMessage>()
-            };
-
-            // Parse all the requests
-            foreach (Request request in requestEnvelope.Requests)
-            {
-                // Had to add assembly name to end of typeName string since protocs cs files are in a different assembly
-                var type = Type.GetType("POGOProtos.Networking.Requests.Messages." + request.RequestType + "Message,POGOProtos");
-
-                if (type == null)
-                {
-                    if (Out != StreamWriter.Null) Out.WriteLine("[*] GetType returns null for requestType: " + request.RequestType);
-                    if (Out != StreamWriter.Null) Out.WriteLine("[*] Check if POGOProtos.Networking.Requests.Messages." + request.RequestType + "Message exists.");
-                    if (Out != StreamWriter.Null) Out.WriteLine("[*]\n");
-
-                    requestBlock.ParsedMessages.Add(request.RequestType, default(IMessage));
-                }
-                else
-                {
-                    var instance = (IMessage)Activator.CreateInstance(type);
-                    instance.MergeFrom(request.RequestMessage);
-
-                    requestBlock.ParsedMessages.Add(request.RequestType, instance);
-                }
-            }
-
-            // TODO check if there is a double response or if a response already exists
-            if (_apiBlocks.ContainsKey(requestEnvelope.RequestId))
-            {
-                if (Out != StreamWriter.Null)
-                {
-                    Out.WriteLine($"[*] Request Id({requestEnvelope.RequestId}) already exists.");
-                    Out.WriteLine($"[*] Old request:\n{_apiBlocks[requestEnvelope.RequestId].RequestBlock}");
-                    Out.WriteLine($"[*] New request:\n{requestBlock}");
-                }
-
-                if (_apiBlocks[requestEnvelope.RequestId].ResponseBlock == null)
-                {
-                    if (Out != StreamWriter.Null) Out.WriteLine($"[*] Response for the old request doesn't - replacing old request");
-                    _apiBlocks[requestEnvelope.RequestId].RequestBlock = requestBlock;
-                }
-                else
-                {
-                    if (Out != StreamWriter.Null) Out.WriteLine($"[*] Response for the old request exists - do nothing");
-                }
-                Out.WriteLine("[*]\n");
-                return;
-            }
-
-            // Initialize a new request/response paired block and track it to update response
-            var args = new RequestHandledEventArgs
-            {
-                RequestId = requestEnvelope.RequestId,
-                RequestBlock = requestBlock
-            };
-            _apiBlocks.Add(args.RequestId, args);
         }
 
         private async Task OnResponse(object sender, SessionEventArgs e)
@@ -351,10 +363,11 @@ namespace PoGo_Proxy
 
                     RequestHandled?.Invoke(this, args);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-
-                    throw;
+                    Out.WriteLine("An exception occured.");
+                    Out.WriteLine(ex.GetType().Name);
+                    Out.WriteLine(ex.StackTrace);
                 }
 
             }
