@@ -25,7 +25,7 @@ In order to get this up a running, you have to run through a couple of steps:
 
 ## Getting started
 
-Once you have everything set up, just start up the sample project on your host device, then open the Pokemon Go app on your phone/tablet. You should start to see the api requests and responses populate the console window. These aren't very readable at the moment, but you can take a look at the generated log file when you end the proxy.
+Once you have everything set up, just start up the sample project on your host device, then open the Pokemon Go app on your phone/tablet. You should start to see the api requests and responses populate the console window. More detailed logs are created in the logs folder.
 
 ## Certificate Pinning
 
