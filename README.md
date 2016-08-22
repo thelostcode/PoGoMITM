@@ -15,9 +15,10 @@ In order to get this up a running, you have to run through a couple of steps:
   * Keep the port as is or update the port to whatever you want
 
 * Then, run the project once to generate the CA certificate. This will add the certificate to your computer. You also need to export this certificate and add it to your android device.
- 
- * Set your Pokemon Go device to use the proxy config
-  * Go to Settings/Wifi, find your Wifi connection and modify it to use the proxy ip / port
+
+* Set your Pokemon Go device to use the proxy config
+
+* Go to Settings/Wifi, find your Wifi connection and modify it to use the proxy ip / port
 
 * Go to http://mitm.it/install-cert on your mobile and click to "Download Certificate". If it fails to install, please download the certificate and manually add it to your WIFI settings.
 
