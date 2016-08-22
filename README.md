@@ -1,9 +1,6 @@
 # PoGo-Proxy.NET
 
-This project is a .net MITM proxy designed to read all the API messages sent between the Pokemon Go device and the Pokemon Go servers. By reading this data, you can make informed decisions about which Pokemon to keep, and so on.
-
-The [POGOProtocs](https://github.com/AeonLucid/POGOProtos) repo is used as a source for protoc files.
-
+This project is a .net MITM proxy designed to read all the API messages sent between the Pokemon Go device and the Pokemon Go servers. 
 # Usage
 
 ## Setting Up
@@ -36,6 +33,7 @@ In case of any problems, please follow instructions on https://github.com/rastap
 # Dependencies
 
 This project is built in Visual Studio 2015 with the following nuget packages:
+* POGOProtos v1.7.0 (https://www.nuget.org/packages/POGOProtos/)
 * DotNetZip v1.9.8
 * Google.Protobuf v3.0.0
 * Newtonsoft.Json v9.0.1
