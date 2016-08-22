@@ -48,6 +48,7 @@ namespace PoGo_Proxy
         public void Start()
         {
             // Link up handlers
+            _proxyServer.Enable100ContinueBehaviour = true;
             _proxyServer.BeforeRequest += OnRequest;
             _proxyServer.BeforeResponse += OnResponse;
             _proxyServer.ServerCertificateValidationCallback += OnCertificateValidation;
@@ -136,6 +137,12 @@ namespace PoGo_Proxy
             {
                 OnRequestSent(pogoWebSession);
                 return;
+            }
+
+            if (e.WebSession.Request.RequestHeaders.ContainsKey("Connection"))
+            {
+                e.WebSession.Request.RequestHeaders["Connection"].Value =
+                    e.WebSession.Request.RequestHeaders["Connection"].Value.Replace("Keep-Alive", "Close");
             }
 
             try
@@ -337,9 +344,14 @@ namespace PoGo_Proxy
                                 }
                                 catch (Exception)
                                 {
+                                    var requestType = RequestType.MethodUnset;
+                                    if (requestTypes.Count >= i)
+                                    {
+                                        requestType = requestTypes[i];
+                                    }
                                     Console.WriteLine("Couldn't get the type");
-                                    Console.WriteLine("[***] GetType returns null for requestType" + requestTypes[i]);
-                                    Console.WriteLine("[***] Check if POGOProtos.Networking.Requests.Messages." + requestTypes[i] + "Message exists.");
+                                    Console.WriteLine("[***] GetType returns null for requestType");
+                                    Console.WriteLine("[***] Check if POGOProtos.Networking.Requests.Messages." + requestType + "Message exists.");
                                 }
                                 if (type != null)
                                 {
@@ -370,14 +382,14 @@ namespace PoGo_Proxy
                         catch (Exception)
                         {
                             Console.WriteLine("Couldn't get the type");
-                            Console.WriteLine("[***] GetType returns null for requestType" );
+                            Console.WriteLine("[***] GetType returns null for requestType");
                             Console.WriteLine("[***] Check if POGOProtos.Networking.Requests.Messages. Message exists.");
                         }
 
                         if (type == null)
                         {
 
-                            //responseBlock.ParsedMessages.Add(requestTypes[i], default(IMessage));
+                            responseBlock.ParsedMessages.Add(RequestType.MethodUnset, default(IMessage));
                         }
                         else
                         {

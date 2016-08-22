@@ -15,18 +15,12 @@ namespace PoGo_Proxy.Sample
 {
     internal class Program
     {
-        private static List<RequestHandledEventArgs> _apiLog;
-        private static List<Tuple<RequestType, string>> _outputMessages;
-        private static Dictionary<ulong, NearbyPokemon> _nearbyPokemon;
-
-        private static HashSet<string> _hostsToLog=new HashSet<string> {"sso.pokemon.com", "pgorelease.nianticlabs.com" };
+        private static readonly HashSet<string> HostsToLog = new HashSet<string> { "sso.pokemon.com", "pgorelease.nianticlabs.com" };
+        private static string _logFileName;
 
         private static void Main()
         {
-            _apiLog = new List<RequestHandledEventArgs>();
-            _outputMessages = new List<Tuple<RequestType, string>>();
-            _nearbyPokemon = new Dictionary<ulong, NearbyPokemon>();
-
+            _logFileName = GenerateLogFileName();
             Console.WriteLine("Hit any key to stop the proxy and exit..");
             Console.WriteLine();
 
@@ -44,179 +38,61 @@ namespace PoGo_Proxy.Sample
 
         private static void Controller_RequestSent(PoGoWebSession webSession)
         {
-            if(!_hostsToLog.Contains(webSession.RawRequest.RequestUri.Host)) return;
+            if (!HostsToLog.Contains(webSession.RawRequest.RequestUri.Host)) return;
 
             Console.WriteLine(webSession.Uri + " Request Sent.");
+            WriteToLogFile("\r\n=============== REQUEST BEGIN ====================");
+            WriteToLogFile(DateTime.UtcNow + " " + webSession.Uri);
+            if (webSession.RawRequest != null)
+            {
+                foreach (var value in webSession.RawRequest.RequestHeaders.Values)
+                {
+                    WriteToLogFile(value.Name + ": " + value.Value);
+                }
+            }
             if (webSession.RequestBlock != null)
+            {
                 Console.WriteLine(string.Join(Environment.NewLine, webSession.RequestBlock.ParsedMessages.Keys));
+                WriteToLogFile(JsonConvert.SerializeObject(webSession.RequestBlock,Formatting.Indented));
+            }
+            WriteToLogFile("=============== REQUEST END ====++================");
         }
 
         private static void Controller_RequestCompleted(PoGoWebSession webSession)
         {
-            if (!_hostsToLog.Contains(webSession.RawRequest.RequestUri.Host)) return;
 
+            if (!HostsToLog.Contains(webSession.RawRequest.RequestUri.Host)) return;
+            WriteToLogFile("\r\n=============== RESPONSE BEGIN ===================");
+            WriteToLogFile(DateTime.UtcNow + " " + webSession.Uri);
             Console.WriteLine(webSession.Uri + " Request Completed.");
-            if(webSession.ResponseBlock!=null)
-            Console.WriteLine(string.Join(Environment.NewLine, webSession.ResponseBlock.ParsedMessages.Keys));
+            if (webSession.RawResponse != null)
+            {
+                foreach (var value in webSession.RawResponse.ResponseHeaders.Values)
+                {
+                    WriteToLogFile(value.Name + ": " + value.Value);
+                }
+            }
+            if (webSession.ResponseBlock != null)
+            {
+                Console.WriteLine(string.Join(Environment.NewLine, webSession.ResponseBlock.ParsedMessages.Keys));
+                WriteToLogFile(JsonConvert.SerializeObject(webSession.ResponseBlock, Formatting.Indented));
+            }
+            WriteToLogFile("=============== RESPONSE END =====================");
         }
 
-        private static void Controller_RequestHandled(object sender, RequestHandledEventArgs e)
+        private static void WriteToLogFile(string text, bool addNewLine = true)
         {
-            // Update log
-            _apiLog.Add(e);
-
-            // Print response to console only if new
-            foreach (var responsePair in e.ResponseBlock.ParsedMessages)
-            {
-                switch (responsePair.Key)
-                {
-                    case RequestType.GetMapObjects:
-                        ParseMapObject((GetMapObjectsResponse)responsePair.Value);
-                        continue;
-                    case RequestType.DownloadSettings:
-                    case RequestType.GetAssetDigest:
-                    case RequestType.DownloadRemoteConfigVersion:
-                        continue;
-                }
-
-                var output = _outputMessages.SingleOrDefault(tuple => tuple.Item1 == responsePair.Key);
-
-                var outputMessage = ParseResponseMessage(responsePair);
-
-                if (output == null)
-                {
-                    _outputMessages.Add(new Tuple<RequestType, string>(responsePair.Key, outputMessage));
-
-                    Console.WriteLine($"[+] New {responsePair.Key} response");
-                    Console.WriteLine(outputMessage);
-                }
-                else
-                {
-                    if (output.Item2 == outputMessage) continue;
-
-                    Console.WriteLine($"[+] Updated {responsePair.Key} response");
-                    Console.WriteLine(outputMessage);
-                }
-            }
+            File.AppendAllText(_logFileName, text + (addNewLine ? Environment.NewLine : string.Empty));
         }
 
-        private static void ParseMapObject(GetMapObjectsResponse response)
+        private static string GenerateLogFileName()
         {
-            if (response.Status == MapObjectsStatus.Success)
-            {
-                foreach (var cell in response.MapCells)
-                {
-                    foreach (var poke in cell.NearbyPokemons)
-                    {
-                        _nearbyPokemon[poke.EncounterId] = poke;
-                    }
-                }
-            }
-
-            if (_nearbyPokemon.Count > 0) Console.WriteLine("NEARBY POKEMON");
-            foreach (var poke in _nearbyPokemon.Values)
-            {
-                Console.WriteLine($"  Name: {poke.PokemonId}, Distance: {poke.DistanceInMeters}m (This value will always be 200m until Niantic fixes servers)");
-            }
+            var fileName = $"{DateTime.Now.ToString("yyyyMMdd-HHmmss")}.log";
+            var logFolder = Path.Combine(Environment.CurrentDirectory, "Logs");
+            Directory.CreateDirectory(logFolder);
+            return Path.Combine(logFolder, fileName);
         }
 
-        private static string ParseResponseMessage(KeyValuePair<RequestType, IMessage> responsePair)
-        {
-            var sb = new StringBuilder();
 
-            switch (responsePair.Key)
-            {
-                default:
-                    sb.AppendLine("    Ignored");
-                    break;
-
-                case RequestType.GetPlayer:
-                    {
-                        var response = (GetPlayerResponse)responsePair.Value;
-                        if (response.Success)
-                        {
-                            sb.AppendLine($"    Name: {response.PlayerData.Username}");
-                            foreach (var currencyPair in response.PlayerData.Currencies)
-                            {
-                                sb.AppendLine($"    {currencyPair.Name}: {currencyPair.Amount}");
-                            }
-                        }
-                        break;
-                    }
-                case RequestType.GetHatchedEggs:
-                    {
-                        var response = (GetHatchedEggsResponse)responsePair.Value;
-                        if (response.Success)
-                        {
-                            if (response.PokemonId.Count == 0) sb.AppendLine("    No hatched eggs");
-                            for (var i = 0; i < response.PokemonId.Count; i++)
-                            {
-                                sb.AppendLine($"    Egg {i}: ");
-                                sb.AppendLine("      PokemonId: " + response.PokemonId[i]);
-                                sb.AppendLine("      ExperienceAwarded: " + response.ExperienceAwarded[i]);
-                                sb.AppendLine("      CandyAwarded: " + response.CandyAwarded[i]);
-                                sb.AppendLine("      StardustAwarded: " + response.StardustAwarded[i]);
-                            }
-                        }
-                        break;
-                    }
-                case RequestType.GetInventory:
-                    {
-                        var response = (GetInventoryResponse)responsePair.Value;
-                        if (response.Success)
-                        {
-                            sb.AppendLine("    lots of data to parse");
-                        }
-                        break;
-                    }
-                case RequestType.CheckAwardedBadges: // TODO should this be GetAwardedBadges in POGOProtocs?
-                    {
-                        var response = (CheckAwardedBadgesResponse)responsePair.Value;
-                        if (response.Success)
-                        {
-                            if (response.AwardedBadges.Count == 0) sb.AppendLine("    No awarded badges");
-                            for (var i = 0; i < response.AwardedBadges.Count; i++)
-                            {
-                                sb.AppendLine($"    Badge {i}: ");
-                                sb.AppendLine("      AwardedBadges: " + response.AwardedBadges[i]);
-                                sb.AppendLine("      AwardedBadgeLevels: " + response.AwardedBadgeLevels[i]);
-                            }
-                        }
-                        break;
-                    }
-                case RequestType.GetGymDetails:
-                    {
-                        var response = (GetGymDetailsResponse)responsePair.Value;
-
-                        if (response.Result == GetGymDetailsResponse.Types.Result.Success)
-                        {
-                            sb.AppendLine($"    Name: {response.Name}");
-                            sb.AppendLine($"    Id: {response.GymState.FortData.Id}");
-                        }
-                        break;
-                    }
-                case RequestType.Encounter:
-                    {
-                        var response = (EncounterResponse)responsePair.Value;
-
-                        sb.AppendLine("    PokemonId: " + response.WildPokemon.PokemonData.PokemonId);
-                        sb.AppendLine("    IndividualAttack: " + response.WildPokemon.PokemonData.IndividualAttack);
-                        sb.AppendLine("    IndividualDefense: " + response.WildPokemon.PokemonData.IndividualDefense);
-                        sb.AppendLine("    IndividualStamina: " + response.WildPokemon.PokemonData.IndividualStamina);
-                        break;
-                    }
-                case RequestType.DiskEncounter:
-                    {
-                        var response = (DiskEncounterResponse)responsePair.Value;
-
-                        sb.AppendLine("    PokemonId: " + response.PokemonData.PokemonId);
-                        sb.AppendLine("    IndividualAttack: " + response.PokemonData.IndividualAttack);
-                        sb.AppendLine("    IndividualDefense: " + response.PokemonData.IndividualDefense);
-                        sb.AppendLine("    IndividualStamina: " + response.PokemonData.IndividualStamina);
-                        break;
-                    }
-            }
-            return sb.ToString();
-        }
     }
 }
