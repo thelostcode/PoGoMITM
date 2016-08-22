@@ -1,4 +1,5 @@
 ﻿using System;
+using Titanium.Web.Proxy.Http;
 
 namespace PoGo_Proxy
 {
