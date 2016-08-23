@@ -4,7 +4,7 @@ using Google.Protobuf;
 using Newtonsoft.Json;
 using POGOProtos.Networking.Requests;
 
-namespace PoGo_Proxy
+namespace PoGo_Proxy.Models
 {
     public class MessageBlock
     {

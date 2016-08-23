@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Google.Protobuf;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using PoGo_Proxy.Logging;
+using PoGo_Proxy.Models;
 using POGOProtos.Map;
 using POGOProtos.Map.Pokemon;
 using POGOProtos.Networking.Requests;
@@ -16,13 +19,15 @@ namespace PoGo_Proxy.Sample
     internal class Program
     {
         private static readonly HashSet<string> HostsToLog = new HashSet<string> { "sso.pokemon.com", "pgorelease.nianticlabs.com" };
-        private static string _logFileName;
+        private static List<ILogger> _loggers = new List<ILogger>();
 
         private static void Main()
         {
-            _logFileName = GenerateLogFileName();
             Console.WriteLine("Hit any key to stop the proxy and exit..");
             Console.WriteLine();
+
+            _loggers.Add(new FileLogger());
+            _loggers.Add(new MongoLogger("mongodb://127.0.0.1/PoGoMITM?maxPoolSize=1000&minPoolSize=100"));
 
             var controller = new ProxyController("0.0.0.0", 8080) { Out = Console.Out };
 
@@ -36,62 +41,26 @@ namespace PoGo_Proxy.Sample
 
         }
 
-        private static void Controller_RequestSent(PoGoWebSession webSession)
+        private static void Controller_RequestSent(PoGoWebRequest webRequest)
         {
-            if (!HostsToLog.Contains(webSession.RawRequest.RequestUri.Host)) return;
-
-            Console.WriteLine(webSession.Uri + " Request Sent.");
-            WriteToLogFile("\r\n=============== REQUEST BEGIN ====================");
-            WriteToLogFile(DateTime.UtcNow + " " + webSession.Uri);
-            if (webSession.RawRequest != null)
-            {
-                foreach (var value in webSession.RawRequest.RequestHeaders.Values)
-                {
-                    WriteToLogFile(value.Name + ": " + value.Value);
-                }
-            }
-            if (webSession.RequestBlock != null)
-            {
-                Console.WriteLine(string.Join(Environment.NewLine, webSession.RequestBlock.ParsedMessages.Keys));
-                WriteToLogFile(JsonConvert.SerializeObject(webSession.RequestBlock,Formatting.Indented));
-            }
-            WriteToLogFile("=============== REQUEST END ====++================");
+            if (!HostsToLog.Contains(webRequest.Uri.Host)) return;
+            Console.WriteLine(webRequest.Uri.AbsoluteUri + " Request Sent.");
         }
 
-        private static void Controller_RequestCompleted(PoGoWebSession webSession)
+        private static async void Controller_RequestCompleted(PoGoWebRequest webRequest)
         {
 
-            if (!HostsToLog.Contains(webSession.RawRequest.RequestUri.Host)) return;
-            WriteToLogFile("\r\n=============== RESPONSE BEGIN ===================");
-            WriteToLogFile(DateTime.UtcNow + " " + webSession.Uri);
-            Console.WriteLine(webSession.Uri + " Request Completed.");
-            if (webSession.RawResponse != null)
+            if (!HostsToLog.Contains(webRequest.Uri.Host)) return;
+            Console.WriteLine(webRequest.Uri.AbsoluteUri + " Request Completed.");
+
+            foreach (var logger in _loggers)
             {
-                foreach (var value in webSession.RawResponse.ResponseHeaders.Values)
-                {
-                    WriteToLogFile(value.Name + ": " + value.Value);
-                }
+                await logger.Log(webRequest);
             }
-            if (webSession.ResponseBlock != null)
-            {
-                Console.WriteLine(string.Join(Environment.NewLine, webSession.ResponseBlock.ParsedMessages.Keys));
-                WriteToLogFile(JsonConvert.SerializeObject(webSession.ResponseBlock, Formatting.Indented));
-            }
-            WriteToLogFile("=============== RESPONSE END =====================");
+
         }
 
-        private static void WriteToLogFile(string text, bool addNewLine = true)
-        {
-            File.AppendAllText(_logFileName, text + (addNewLine ? Environment.NewLine : string.Empty));
-        }
 
-        private static string GenerateLogFileName()
-        {
-            var fileName = $"{DateTime.Now.ToString("yyyyMMdd-HHmmss")}.log";
-            var logFolder = Path.Combine(Environment.CurrentDirectory, "Logs");
-            Directory.CreateDirectory(logFolder);
-            return Path.Combine(logFolder, fileName);
-        }
 
 
     }

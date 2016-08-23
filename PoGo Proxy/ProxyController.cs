@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Google.Protobuf;
 using Newtonsoft.Json;
+using PoGo_Proxy.Models;
 using POGOProtos.Networking.Envelopes;
 using POGOProtos.Networking.Requests;
 using Titanium.Web.Proxy;
@@ -19,11 +20,10 @@ namespace PoGo_Proxy
 {
     public sealed class ProxyController
     {
-        public delegate void RequestSentEventHandler(PoGoWebSession webSession);
-        public delegate void RequestCompletedEventHandler(PoGoWebSession webSession);
+        public delegate void RequestSentEventHandler(PoGoWebRequest webRequest);
+        public delegate void RequestCompletedEventHandler(PoGoWebRequest webRequest);
 
         private Dictionary<string, PoGoWebSession> _webSessions = new Dictionary<string, PoGoWebSession>();
-        public List<PoGoWebSession> WebSessions = new List<PoGoWebSession>();
         private readonly ProxyServer _proxyServer;
         //        private readonly Dictionary<ulong, RequestHandledEventArgs> _apiBlocks;
 
@@ -117,7 +117,8 @@ namespace PoGo_Proxy
                 RawResponse = e.WebSession.Response,
                 RawRequest = e.WebSession.Request,
                 Guid = uid,
-                Uri = e.WebSession.Request.RequestUri.AbsoluteUri
+                Uri = e.WebSession.Request.RequestUri.AbsoluteUri,
+                RequestTime = DateTime.UtcNow
             };
             _webSessions.Add(uid.ToString(), pogoWebSession);
 
@@ -155,6 +156,7 @@ namespace PoGo_Proxy
                 var codedInputStream = new CodedInputStream(pogoWebSession.RequestBody);
                 var requestEnvelope = RequestEnvelope.Parser.ParseFrom(codedInputStream);
 
+                pogoWebSession.RequestEnvelope = requestEnvelope;
                 if (requestEnvelope == null)
                 {
                     OnRequestSent(pogoWebSession);
@@ -286,6 +288,7 @@ namespace PoGo_Proxy
 
                     var codedInputStream = new CodedInputStream(pogoWebSession.ResponseBody);
                     var responseEnvelope = ResponseEnvelope.Parser.ParseFrom(codedInputStream);
+                    pogoWebSession.ResponseEnvelope = responseEnvelope;
 
                     // Initialize the response block
                     var responseBlock = new MessageBlock
@@ -496,14 +499,13 @@ namespace PoGo_Proxy
         private void OnRequestCompleted(PoGoWebSession websession)
         {
             if (websession == null) return;
-            WebSessions.Add(websession);
-            RequestCompleted?.Invoke(websession);
+            RequestCompleted?.Invoke(websession.AsPoGoWebRequest());
         }
 
         private void OnRequestSent(PoGoWebSession websession)
         {
             if (websession == null) return;
-            RequestSent?.Invoke(websession);
+            RequestSent?.Invoke(websession.AsPoGoWebRequest());
         }
     }
 }
