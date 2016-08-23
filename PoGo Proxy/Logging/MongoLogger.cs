@@ -35,7 +35,13 @@ namespace PoGo_Proxy.Logging
         public async Task Log(PoGoWebRequest webRequest)
         {
             var collection = GetCollection<PoGoWebRequest>();
-            await collection.InsertOneAsync(webRequest);
+            try
+            {
+                await collection.InsertOneAsync(webRequest);
+            }
+            catch (Exception)
+            {
+            }
         }
 
         private IMongoDatabase GetDatabase(string databaseName = null)

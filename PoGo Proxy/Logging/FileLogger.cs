@@ -21,6 +21,9 @@ namespace PoGo_Proxy.Logging
 
         public async Task Log(PoGoWebRequest webRequest)
         {
+            try
+            {
+
             var sb = new StringBuilder();
             sb.AppendLine();
             sb.AppendLine("==================================================");
@@ -39,6 +42,10 @@ namespace PoGo_Proxy.Logging
                 await sourceStream.WriteAsync(encodedText, 0, encodedText.Length);
             };
 
+            }
+            catch (Exception)
+            {
+            }
 
         }
 
