@@ -1,3 +1,5 @@
 [submodule "submodules/Titanium-Web-Proxy"]
 	path = submodules/Titanium-Web-Proxy
 	url = https://github.com/justcoding121/Titanium-Web-Proxy.git
+[submodule "Titanium-Web-Proxy"]
+	branch = release
