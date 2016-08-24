@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace PoGo_Proxy.ProtoHelpers
 {
@@ -33,13 +30,14 @@ namespace PoGo_Proxy.ProtoHelpers
 
         public static object DecodeRaw(byte[] data)
         {
-            if (data == null) return null;
+
+            if (data == null || data.Length == 0) return null;
             var guid = Guid.NewGuid().ToString();
             var inPath = Path.Combine("Temp", guid + "-in");
             File.WriteAllBytes(inPath, data);
             var outPath = Path.Combine("Temp", guid + "-out");
             var arguments = $"--decode_raw < \"{inPath}\" > \"{outPath}\"";
-//            var arguments = $"--decode_raw";
+            //            var arguments = $"--decode_raw";
             var commandOutput = RunProtoc(arguments, data);
             //Console.Write(commandOutput);
             if (File.Exists(outPath))

@@ -8,6 +8,15 @@ namespace PoGo_Proxy.Sample
     {
         private static void Main()
         {
+
+            //var outputs = new List<string>();
+            //var allRequests = PoGoWebRequest.GetAllRequests();
+            //foreach (var request in allRequests.Where(r => r.RequestBody != null))
+            //{
+            //    var b = Protoc.DecodeRaw(request.RequestBody);
+            //    if (b != null)
+            //        outputs.Add(b.ToString());
+            //}
             Console.WriteLine("Hit any key to stop the proxy and exit..");
             Console.WriteLine();
 
