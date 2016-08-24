@@ -10,23 +10,38 @@ namespace PoGo_Proxy.ProtoHelpers
 {
     public static class Protoc
     {
-        private static readonly string ProtocPath;
-        private static readonly string TempFolder;
         static Protoc()
         {
-            TempFolder = Path.Combine(Environment.CurrentDirectory, "Temp");
-            ProtocPath = Path.Combine(Environment.CurrentDirectory, "protoc.exe");
-            Directory.CreateDirectory(TempFolder);
+            var tempFolder = Path.Combine(Environment.CurrentDirectory, "Temp");
+            Directory.CreateDirectory(tempFolder);
+            var files = Directory.GetFiles(tempFolder);
+            foreach (var file in files)
+            {
+                File.Delete(file);
+            }
         }
+
+        //var outputs = new List<string>();
+        //var allRequests = PoGoWebRequest.GetAllRequests();
+        //foreach (var request in allRequests.Where(r => r.RequestBody != null))
+        //{
+        //    var b = Protoc.DecodeRaw(request.RequestBody);
+        //    if (b != null)
+        //        outputs.Add(b.ToString());
+        //}
+
+
         public static object DecodeRaw(byte[] data)
         {
+            if (data == null) return null;
             var guid = Guid.NewGuid().ToString();
-            var inPath = Path.Combine(TempFolder, guid + "-in");
+            var inPath = Path.Combine("Temp", guid + "-in");
             File.WriteAllBytes(inPath, data);
-            var outPath = Path.Combine(TempFolder, guid + "-out");
-            var arguments = $"--decode_raw \"{inPath}\" \"{outPath}\"";
-            var commandOutput = RunProtoc(arguments);
-            Console.Write(commandOutput);
+            var outPath = Path.Combine("Temp", guid + "-out");
+            var arguments = $"--decode_raw < \"{inPath}\" > \"{outPath}\"";
+//            var arguments = $"--decode_raw";
+            var commandOutput = RunProtoc(arguments, data);
+            //Console.Write(commandOutput);
             if (File.Exists(outPath))
             {
                 return File.ReadAllText(outPath);
@@ -35,15 +50,18 @@ namespace PoGo_Proxy.ProtoHelpers
 
         }
 
-        private static string RunProtoc(string arguments)
+        private static string RunProtoc(string arguments, byte[] data)
         {
             var sb = new StringBuilder();
             var startInfo = new ProcessStartInfo();
-            startInfo.FileName = ProtocPath;
-            startInfo.Arguments = arguments;
+            startInfo.FileName = "cmd";
+            startInfo.Arguments = $"/c protoc {arguments}";
             startInfo.RedirectStandardError = true;
             startInfo.RedirectStandardOutput = true;
+            //startInfo.RedirectStandardInput = true;
             startInfo.UseShellExecute = false;
+            startInfo.CreateNoWindow = true;
+            startInfo.WorkingDirectory = Environment.CurrentDirectory;
 
             var process = new Process();
             process.StartInfo = startInfo;
@@ -58,6 +76,8 @@ namespace PoGo_Proxy.ProtoHelpers
             };
 
             process.Start();
+            //process.StandardInput.BaseStream.Write(data,0,data.Length);
+            //new BinaryWriter(process.StandardInput.BaseStream).Write(data);
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 

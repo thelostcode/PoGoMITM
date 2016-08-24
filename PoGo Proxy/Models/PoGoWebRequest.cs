@@ -19,7 +19,9 @@ namespace PoGo_Proxy.Models
         public List<HttpHeader> RequestHeaders { get; set; }
         public List<HttpHeader> ResponseHeaders { get; set; }
         public byte[] RequestBody { get; set; }
+        public string RawDecodedRequestBody { get; set; }
         public byte[] ResponseBody { get; set; }
+        public string RawDecodedResponseBody { get; set; }
         public RequestEnvelope RequestEnvelope { get; set; }
         public ResponseEnvelope ResponseEnvelope { get; set; }
         public MessageBlock RequestBlock { get; set; }

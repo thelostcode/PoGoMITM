@@ -15,11 +15,6 @@ namespace PoGo_Proxy.Sample
 
         private static void Main()
         {
-            //var allRequests = PoGoWebRequest.GetAllRequests();
-            //foreach (var request in allRequests.Where(r => r.RequestBody != null))
-            //{
-            //    var b = Protoc.DecodeRaw(request.RequestBody);
-            //}
             Console.WriteLine("Hit any key to stop the proxy and exit..");
             Console.WriteLine();
 

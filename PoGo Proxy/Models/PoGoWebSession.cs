@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using PoGo_Proxy.ProtoHelpers;
 using POGOProtos.Networking.Envelopes;
 using Titanium.Web.Proxy.Http;
 
@@ -22,6 +23,8 @@ namespace PoGo_Proxy.Models
 
         public PoGoWebRequest AsPoGoWebRequest()
         {
+            var rawRequest = Protoc.DecodeRaw(RequestBody);
+            var rawResponse = Protoc.DecodeRaw(ResponseBody);
             return new PoGoWebRequest
             {
                 Uri = RawRequest.RequestUri,
@@ -29,7 +32,9 @@ namespace PoGo_Proxy.Models
                 RequestHeaders = RawRequest.RequestHeaders.Values.ToList(),
                 ResponseHeaders = RawResponse.ResponseHeaders.Values.ToList(),
                 RequestBody = RequestBody,
+                RawDecodedRequestBody = rawRequest?.ToString(),
                 ResponseBody = ResponseBody,
+                RawDecodedResponseBody = rawResponse?.ToString(),
                 RequestEnvelope = RequestEnvelope,
                 ResponseEnvelope = ResponseEnvelope,
                 RequestBlock = RequestBlock,
