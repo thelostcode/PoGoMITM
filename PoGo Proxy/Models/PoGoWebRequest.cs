@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Driver;
+using PoGo_Proxy.MongoDB;
 using POGOProtos.Networking.Envelopes;
 using Titanium.Web.Proxy.Models;
 
@@ -23,5 +25,10 @@ namespace PoGo_Proxy.Models
         public MessageBlock RequestBlock { get; set; }
         public MessageBlock ResponseBlock { get; set; }
 
+
+        public static List<PoGoWebRequest> GetAllRequests()
+        {
+            return MongoHelper.GetCollection<PoGoWebRequest>().Find(FilterDefinition<PoGoWebRequest>.Empty).Project(e=>new PoGoWebRequest {RequestBody = e.RequestBody}).ToList();
+        }
     }
 }

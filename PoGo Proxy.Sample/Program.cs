@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using PoGo_Proxy.Logging;
 using PoGo_Proxy.Models;
+using PoGo_Proxy.MongoDB;
+using PoGo_Proxy.ProtoHelpers;
 
 namespace PoGo_Proxy.Sample
 {
@@ -12,13 +15,17 @@ namespace PoGo_Proxy.Sample
 
         private static void Main()
         {
+            //var allRequests = PoGoWebRequest.GetAllRequests();
+            //foreach (var request in allRequests.Where(r => r.RequestBody != null))
+            //{
+            //    var b = Protoc.DecodeRaw(request.RequestBody);
+            //}
             Console.WriteLine("Hit any key to stop the proxy and exit..");
             Console.WriteLine();
 
             Loggers.Add(new FileLogger());
-            Loggers.Add(new MongoLogger("mongodb://127.0.0.1/PoGoMITM?maxPoolSize=1000&minPoolSize=100"));
-
-            var controller = new ProxyController("0.0.0.0", 8080) { Out = Console.Out };
+            Loggers.Add(new MongoLogger());
+            var controller = new ProxyController("0.0.0.0", 61221) { Out = Console.Out };
 
             controller.RequestCompleted += Controller_RequestCompleted;
             controller.RequestSent += Controller_RequestSent;
