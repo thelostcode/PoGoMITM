@@ -6,7 +6,7 @@ using Titanium.Web.Proxy.Http;
 
 namespace PoGo_Proxy.Models
 {
-    public class PoGoWebSession
+    internal class PoGoWebSession
     {
         public string Uri { get; set; }
         public DateTime RequestTime { get; set; }

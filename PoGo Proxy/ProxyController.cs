@@ -6,6 +6,7 @@ using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Google.Protobuf;
+using PoGo_Proxy.Config;
 using PoGo_Proxy.Models;
 using POGOProtos.Networking.Envelopes;
 using POGOProtos.Networking.Requests;
@@ -34,10 +35,8 @@ namespace PoGo_Proxy
 
         public ProxyController(string ipAddress, int port)
         {
-            _proxyServer = new ProxyServer("POGO Proxy.Net CA", "POGO Proxy");
-            //_proxyServer.RootCertificateIssuerName = "PoGoProxy";
-            //_proxyServer.RootCertificateName = "PoGoProxy Root CA";
-            //_apiBlocks = new Dictionary<ulong, RequestHandledEventArgs>();
+            _proxyServer = new ProxyServer(AppConfig.RootCertificateName, AppConfig.RootCertificateIssuer);
+
 
             Ip = ipAddress;
             Port = port;
@@ -484,7 +483,7 @@ namespace PoGo_Proxy
             try
             {
                 store.Open(OpenFlags.ReadOnly);
-                return store.Certificates.Cast<X509Certificate2>().FirstOrDefault(cert => cert.SubjectName.Name != null && cert.SubjectName.Name.Contains("POGO Proxy.Net CA"));
+                return store.Certificates.Cast<X509Certificate2>().FirstOrDefault(cert => cert.SubjectName.Name != null && cert.SubjectName.Name.Contains(AppConfig.RootCertificateName));
             }
             finally
             {

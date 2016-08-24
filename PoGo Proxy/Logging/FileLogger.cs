@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using PoGo_Proxy.Config;
 using PoGo_Proxy.Models;
 
 namespace PoGo_Proxy.Logging
@@ -52,9 +53,8 @@ namespace PoGo_Proxy.Logging
         private string GenerateLogFileName()
         {
             var fileName = $"{_logFileName}{DateTime.Now.ToString("yyyyMMddHHmmss")}.log";
-            var logFolder = Path.Combine(Environment.CurrentDirectory, "Logs");
-            Directory.CreateDirectory(logFolder);
-            return Path.Combine(logFolder, fileName);
+            Directory.CreateDirectory(AppConfig.LogsFolder);
+            return Path.Combine(AppConfig.LogsFolder, fileName);
         }
     }
 }
