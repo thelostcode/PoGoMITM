@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace PoGo_Proxy.Sample
+namespace PoGo_Proxy.Utils
 {
     public static class DateHelpers
     {
