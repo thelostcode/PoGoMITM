@@ -1,18 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Threading.Tasks;
-using PoGo_Proxy.Config;
-using PoGo_Proxy.Models;
+using PoGoMITM.Base.Config;
+using PoGoMITM.Base.Models;
 using Titanium.Web.Proxy;
 using Titanium.Web.Proxy.Exceptions;
 using Titanium.Web.Proxy.Models;
 
-namespace PoGo_Proxy
+namespace PoGoMITM.Base
 {
     public class ProxyHandler : IDisposable
     {

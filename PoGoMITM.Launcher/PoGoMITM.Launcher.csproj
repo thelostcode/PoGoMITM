@@ -53,9 +53,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PoGo-MITM.Base\PoGo-MITM.Base.csproj">
+    <ProjectReference Include="..\PoGoMITM.Base\PoGoMITM.Base.csproj">
       <Project>{694b51ed-825b-42a4-9c0b-17683cf8e244}</Project>
-      <Name>PoGo-MITM.Base</Name>
+      <Name>PoGoMITM.Base</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -6,8 +6,8 @@ using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Google.Protobuf;
-using PoGo_Proxy.Config;
-using PoGo_Proxy.Models;
+using PoGoMITM.Base.Config;
+using PoGoMITM.Base.Models;
 using POGOProtos.Networking.Envelopes;
 using POGOProtos.Networking.Requests;
 using Titanium.Web.Proxy;
@@ -15,7 +15,7 @@ using Titanium.Web.Proxy.EventArguments;
 using Titanium.Web.Proxy.Exceptions;
 using Titanium.Web.Proxy.Models;
 
-namespace PoGo_Proxy
+namespace PoGoMITM.Base
 {
     public sealed class ProxyController
     {

@@ -3,9 +3,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using PoGo_Proxy.Utils;
+using PoGoMITM.Base.Utils;
 
-namespace PoGo_Proxy.ProtoHelpers
+namespace PoGoMITM.Base.ProtoHelpers
 {
     public static class Protoc
     {

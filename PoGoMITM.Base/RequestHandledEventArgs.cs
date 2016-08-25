@@ -1,7 +1,7 @@
 ﻿using System;
-using PoGo_Proxy.Models;
+using PoGoMITM.Base.Models;
 
-namespace PoGo_Proxy
+namespace PoGoMITM.Base
 {
     public class RequestHandledEventArgs : EventArgs
     {

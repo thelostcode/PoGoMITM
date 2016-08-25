@@ -1,8 +1,9 @@
 ﻿using System;
-using PoGo_Proxy.Config;
-using PoGo_Proxy.Models;
+using PoGoMITM.Base;
+using PoGoMITM.Base.Config;
+using PoGoMITM.Base.Models;
 
-namespace PoGo_Proxy.Sample
+namespace PoGoMITM.Launcher
 {
     internal class Program
     {

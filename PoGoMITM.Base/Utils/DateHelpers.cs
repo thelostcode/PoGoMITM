@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace PoGo_Proxy.Utils
+namespace PoGoMITM.Base.Utils
 {
     public static class DateHelpers
     {
