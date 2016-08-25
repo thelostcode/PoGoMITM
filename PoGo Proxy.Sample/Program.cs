@@ -9,45 +9,58 @@ namespace PoGo_Proxy.Sample
         private static void Main()
         {
 
-            //var outputs = new List<string>();
-            //var allRequests = PoGoWebRequest.GetAllRequests();
-            //foreach (var request in allRequests.Where(r => r.RequestBody != null))
-            //{
-            //    var b = Protoc.DecodeRaw(request.RequestBody);
-            //    if (b != null)
-            //        outputs.Add(b.ToString());
-            //}
-            Console.WriteLine("Hit any key to stop the proxy and exit..");
+            Console.WriteLine("Hit escape to stop the proxy and exit..");
             Console.WriteLine();
 
-            var controller = new ProxyController(AppConfig.BindIp, AppConfig.BindPort) { Out = Console.Out };
+            var proxy = new ProxyHandler(AppConfig.BindIp, AppConfig.BindPort);
 
-            controller.RequestCompleted += Controller_RequestCompleted;
-            controller.RequestSent += Controller_RequestSent;
+            proxy.RequestSent += Proxy_RequestSent;
+            proxy.RequestCompleted += Proxy_RequestCompleted;
 
-            controller.Start();
-            Console.ReadKey();
-            controller.Stop();
+            proxy.Start();
 
-        }
+            Console.WriteLine($"Proxy is started on {AppConfig.BindIp}:{AppConfig.BindPort}");
 
-        private static void Controller_RequestSent(PoGoWebRequest webRequest)
-        {
-            if (!AppConfig.HostsToLog.Contains(webRequest.Uri.Host)) return;
-            Console.WriteLine(webRequest.Uri.AbsoluteUri + " Request Sent.");
-        }
-
-        private static async void Controller_RequestCompleted(PoGoWebRequest webRequest)
-        {
-
-            if (!AppConfig.HostsToLog.Contains(webRequest.Uri.Host)) return;
-            Console.WriteLine(webRequest.Uri.AbsoluteUri + " Request Completed.");
-
-            foreach (var logger in AppConfig.Loggers)
+            while (true)
             {
-                await logger.Log(webRequest);
+                var key = Console.ReadKey();
+                switch (key.Key)
+                {
+                    case ConsoleKey.Escape:
+                        proxy.Stop();
+                        return;
+                }
             }
+        }
 
+        private static void Proxy_RequestSent(RawContext rawContext)
+        {
+            if (!AppConfig.HostsToDump.Contains(rawContext.RequestUri.Host)) return;
+            Console.WriteLine(rawContext.RequestUri.AbsoluteUri + " Request Sent.");
+        }
+
+        private static async void Proxy_RequestCompleted(RawContext rawContext)
+        {
+            if (!AppConfig.HostsToDump.Contains(rawContext.RequestUri.Host)) return;
+            Console.WriteLine(rawContext.RequestUri.AbsoluteUri + " Request Completed.");
+
+            if (AppConfig.DumpRaw)
+            {
+                foreach (var dumper in AppConfig.DataDumpers)
+                {
+                    await dumper.Dump(rawContext);
+
+                }
+            }
+            if (AppConfig.DumpProcessed)
+            {
+                var processedContext = await RequestContext.GetInstance(rawContext);
+                foreach (var dumper in AppConfig.DataDumpers)
+                {
+                    await dumper.Dump(processedContext);
+
+                }
+            }
         }
     }
 }

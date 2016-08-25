@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
+using PoGo_Proxy.Utils;
 
 namespace PoGo_Proxy.ProtoHelpers
 {
@@ -28,59 +30,64 @@ namespace PoGo_Proxy.ProtoHelpers
         //}
 
 
-        public static object DecodeRaw(byte[] data)
+        public static async Task<string> DecodeRaw(byte[] data)
         {
 
             if (data == null || data.Length == 0) return null;
             var guid = Guid.NewGuid().ToString();
             var inPath = Path.Combine("Temp", guid + "-in");
-            File.WriteAllBytes(inPath, data);
+            await FileAsync.WriteAsync(inPath, data);
             var outPath = Path.Combine("Temp", guid + "-out");
             var arguments = $"--decode_raw < \"{inPath}\" > \"{outPath}\"";
-            //            var arguments = $"--decode_raw";
-            var commandOutput = RunProtoc(arguments, data);
-            //Console.Write(commandOutput);
+            var commandOutput = await RunProtoc(arguments);
             if (File.Exists(outPath))
             {
-                return File.ReadAllText(outPath);
+                return await FileAsync.ReadTextAsync(outPath, Encoding.ASCII);
             }
             return null;
 
         }
 
-        private static string RunProtoc(string arguments, byte[] data)
+        private static Task<string> RunProtoc(string arguments)
         {
+            var tcs = new TaskCompletionSource<string>();
             var sb = new StringBuilder();
-            var startInfo = new ProcessStartInfo();
-            startInfo.FileName = "cmd";
-            startInfo.Arguments = $"/c protoc {arguments}";
-            startInfo.RedirectStandardError = true;
-            startInfo.RedirectStandardOutput = true;
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "cmd",
+                Arguments = $"/c protoc {arguments}",
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WorkingDirectory = Environment.CurrentDirectory
+            };
             //startInfo.RedirectStandardInput = true;
-            startInfo.UseShellExecute = false;
-            startInfo.CreateNoWindow = true;
-            startInfo.WorkingDirectory = Environment.CurrentDirectory;
 
-            var process = new Process();
-            process.StartInfo = startInfo;
-            process.EnableRaisingEvents = true;
+            var process = new Process
+            {
+                StartInfo = startInfo,
+                EnableRaisingEvents = true
+            };
             process.ErrorDataReceived += (sender, args) =>
             {
                 if (args.Data != null) sb.AppendLine(args.Data);
+                tcs.SetResult(sb.ToString());
             };
             process.OutputDataReceived += (sender, args) =>
             {
                 if (args.Data != null) sb.AppendLine(args.Data);
             };
-
-            process.Start();
+            if (process.Start())
+            {
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+                process.WaitForExit(5000);
+                tcs.SetResult(sb.ToString());
+            }
             //process.StandardInput.BaseStream.Write(data,0,data.Length);
             //new BinaryWriter(process.StandardInput.BaseStream).Write(data);
-            process.BeginOutputReadLine();
-            process.BeginErrorReadLine();
-
-            process.WaitForExit(5000);
-            return sb.ToString();
+            return tcs.Task;
         }
     }
 }

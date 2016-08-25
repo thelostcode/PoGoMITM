@@ -95,7 +95,7 @@ namespace PoGo_Proxy
                         var pem = ConvertToPem(cert);
                         var headers = new Dictionary<string, HttpHeader>();
                         headers.Add("Content-Type", new HttpHeader("Content-Type", "application/x-x509-ca-cert"));
-                        headers.Add("Content-Disposition", new HttpHeader("Content-Disposition", "inline; filename=cert.pfx"));
+                        headers.Add("Content-Disposition", new HttpHeader("Content-Disposition", $"inline; filename={AppConfig.RootCertificateName}.cer"));
                         await e.Ok(pem, headers);
                     }
                     catch (Exception ex)

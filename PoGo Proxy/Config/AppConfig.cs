@@ -2,32 +2,29 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
-using PoGo_Proxy.Logging;
+using PoGo_Proxy.Dumpers;
 
 namespace PoGo_Proxy.Config
 {
     public static class AppConfig
     {
         private static readonly int _bindPort;
-        //<add key = "BindIP" value="0.0.0.0"/>
-        //<add key = "BindPort" value="61221"/>
-        //<add key = "RootCertificateName" value="POGO MITM.Net CA"/>
-        //<add key = "RootCertificateIssuer" value="POGO MITM.Net"/>
-        //<add key = "LogsFolder" value="Logs"/>
-        //<add key = "TempFolder" value="Temp"/>
-        //<add key = "Loggers" value="FileLogger,MongoLogger"/>
-        //<add key = "HostsToLog" value="sso.pokemon.com,pgorelease.nianticlabs.com"/>
+        private static bool _dumpRaw;
+        private static bool _dumpProcessed;
 
         public static string BindIp { get; private set; }
-
         public static int BindPort => _bindPort;
-
         public static string RootCertificateName { get; private set; }
         public static string RootCertificateIssuer { get; private set; }
         public static string LogsFolder { get; private set; }
+        public static string DumpsFolder { get; private set; }
         public static string TempFolder { get; private set; }
-        public static List<ILogger> Loggers { get; private set; }
-        public static HashSet<string> HostsToLog { get; private set; }
+        public static List<IDataDumper> DataDumpers { get; private set; }
+
+        public static bool DumpRaw => _dumpRaw;
+        public static bool DumpProcessed => _dumpProcessed;
+
+        public static HashSet<string> HostsToDump { get; private set; }
 
         static AppConfig()
         {
@@ -38,44 +35,54 @@ namespace PoGo_Proxy.Config
             }
             RootCertificateName = ConfigurationManager.AppSettings["RootCertificateName"] ?? "POGO Proxy.Net CA";
             RootCertificateIssuer = ConfigurationManager.AppSettings["RootCertificateIssuer"] ?? "POGO Proxy";
-            LogsFolder = ConfigurationManager.AppSettings["LogsFolder"] ?? "Logs";
 
+            LogsFolder = ConfigurationManager.AppSettings["LogsFolder"] ?? "Logs";
             if (!Path.IsPathRooted(LogsFolder))
             {
                 LogsFolder = Path.Combine(Environment.CurrentDirectory, LogsFolder);
             }
 
-            TempFolder = ConfigurationManager.AppSettings["TempFolder"] ?? "Temp";
+            DumpsFolder = ConfigurationManager.AppSettings["DumpsFolder"] ?? "Dumps";
+            if (!Path.IsPathRooted(DumpsFolder))
+            {
+                DumpsFolder = Path.Combine(Environment.CurrentDirectory, DumpsFolder);
+            }
 
+            TempFolder = ConfigurationManager.AppSettings["TempFolder"] ?? "Temp";
             if (!Path.IsPathRooted(TempFolder))
             {
                 TempFolder = Path.Combine(Environment.CurrentDirectory, TempFolder);
             }
 
-            Loggers = new List<ILogger>();
-            var loggers = ConfigurationManager.AppSettings["Loggers"];
-            if (!string.IsNullOrWhiteSpace(loggers))
+            var dumpRaw = ConfigurationManager.AppSettings["DumpRaw"] ?? "true";
+            bool.TryParse(dumpRaw, out _dumpRaw);
+            var dumpProcessed = ConfigurationManager.AppSettings["DumpProcessed"] ?? "true";
+            bool.TryParse(dumpProcessed, out _dumpProcessed);
+
+            DataDumpers = new List<IDataDumper>();
+            var dumpers = ConfigurationManager.AppSettings["DataDumpers"];
+            if (!string.IsNullOrWhiteSpace(dumpers))
             {
-                var loggerArr = loggers.Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (var logger in loggerArr)
+                var dumpersArr = dumpers.Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var dumper in dumpersArr)
                 {
-                    switch (logger.ToLowerInvariant())
+                    switch (dumper.ToLowerInvariant())
                     {
-                        case "filelogger":
-                            Loggers.Add(new FileLogger());
+                        case "filedumper":
+                            DataDumpers.Add(new FileDataDumper());
                             break;
-                        case "mongologger":
-                            Loggers.Add(new MongoLogger());
+                        case "mongodumper":
+                            DataDumpers.Add(new MongoDataDumper());
                             break;
                     }
                 }
             }
 
-            HostsToLog = new HashSet<string>();
-            var hosts = ConfigurationManager.AppSettings["HostsToLog"];
+            HostsToDump = new HashSet<string>();
+            var hosts = ConfigurationManager.AppSettings["HostsToDump"];
             if (!string.IsNullOrWhiteSpace(hosts))
             {
-                HostsToLog = new HashSet<string>(hosts.Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries));
+                HostsToDump = new HashSet<string>(hosts.Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries));
             }
         }
 
