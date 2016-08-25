@@ -54,7 +54,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PoGo Proxy\PoGo-MITM.Base.csproj">
+    <ProjectReference Include="..\PoGo-MITM.Base\PoGo-MITM.Base.csproj">
       <Project>{694b51ed-825b-42a4-9c0b-17683cf8e244}</Project>
       <Name>PoGo-MITM.Base</Name>
     </ProjectReference>
