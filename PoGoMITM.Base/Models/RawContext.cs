@@ -1,16 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using MongoDB.Bson.Serialization.Attributes;
-using PoGo_Proxy.MongoDB;
-using PoGo_Proxy.ProtoHelpers;
+using PoGoMITM.Base.ProtoHelpers;
 using POGOProtos.Networking.Envelopes;
-using Titanium.Web.Proxy.Http;
 using Titanium.Web.Proxy.Models;
 
-namespace PoGo_Proxy.Models
+namespace PoGoMITM.Base.Models
 {
     public class RawContext
     {

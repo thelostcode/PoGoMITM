@@ -3,11 +3,10 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using PoGo_Proxy.Config;
-using PoGo_Proxy.Models;
-using PoGo_Proxy.Utils;
+using PoGoMITM.Base.Config;
+using PoGoMITM.Base.Utils;
 
-namespace PoGo_Proxy.Dumpers
+namespace PoGoMITM.Base.Dumpers
 {
     public class FileDataDumper : IDataDumper
     {

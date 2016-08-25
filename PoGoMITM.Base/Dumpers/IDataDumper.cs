@@ -1,7 +1,6 @@
 ﻿using System.Threading.Tasks;
-using PoGo_Proxy.Models;
 
-namespace PoGo_Proxy.Dumpers
+namespace PoGoMITM.Base.Dumpers
 {
     public interface IDataDumper
     {

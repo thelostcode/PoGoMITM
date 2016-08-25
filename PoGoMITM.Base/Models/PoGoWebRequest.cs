@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
-using PoGo_Proxy.MongoDB;
+using PoGoMITM.Base.MongoDB;
 using POGOProtos.Networking.Envelopes;
 using Titanium.Web.Proxy.Models;
 
-namespace PoGo_Proxy.Models
+namespace PoGoMITM.Base.Models
 {
     public class PoGoWebRequest
     {

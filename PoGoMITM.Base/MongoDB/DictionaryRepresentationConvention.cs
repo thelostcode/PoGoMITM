@@ -2,7 +2,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Options;
 
-namespace PoGo_Proxy.MongoDB
+namespace PoGoMITM.Base.MongoDB
 {
     internal class DictionaryRepresentationConvention : ConventionBase, IMemberMapConvention
     {

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Linq;
-using PoGo_Proxy.ProtoHelpers;
+using PoGoMITM.Base.ProtoHelpers;
 using POGOProtos.Networking.Envelopes;
 using Titanium.Web.Proxy.Http;
 
-namespace PoGo_Proxy.Models
+namespace PoGoMITM.Base.Models
 {
     internal class PoGoWebSession
     {

@@ -5,7 +5,7 @@ using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Options;
 using MongoDB.Driver;
 
-namespace PoGo_Proxy.MongoDB
+namespace PoGoMITM.Base.MongoDB
 {
     public static class MongoHelper
     {

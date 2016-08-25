@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
-using PoGo_Proxy.Dumpers;
+using PoGoMITM.Base.Dumpers;
 
-namespace PoGo_Proxy.Config
+namespace PoGoMITM.Base.Config
 {
     public static class AppConfig
     {

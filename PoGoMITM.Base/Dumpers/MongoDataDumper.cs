@@ -1,9 +1,8 @@
 using System;
 using System.Threading.Tasks;
-using PoGo_Proxy.Models;
-using PoGo_Proxy.MongoDB;
+using PoGoMITM.Base.MongoDB;
 
-namespace PoGo_Proxy.Dumpers
+namespace PoGoMITM.Base.Dumpers
 {
     public class MongoDataDumper : IDataDumper
     {
