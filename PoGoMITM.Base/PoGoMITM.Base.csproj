@@ -77,6 +77,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Cache\ContextCache.cs" />
     <Compile Include="Config\AppConfig.cs" />
     <Compile Include="Dumpers\MongoDataDumper.cs" />
     <Compile Include="Dumpers\FileDataDumper.cs" />

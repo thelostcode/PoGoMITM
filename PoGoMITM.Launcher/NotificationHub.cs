@@ -21,6 +21,8 @@ namespace PoGoMITM.Launcher
         {
             HubContext.Clients.All.sendMessage(message);
         }
+
+        public static void SendRawContext
     }
 
 }

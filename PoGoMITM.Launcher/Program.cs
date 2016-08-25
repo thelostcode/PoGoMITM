@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using log4net;
 using log4net.Core;
 using Microsoft.AspNet.SignalR.Hubs;
 using Microsoft.Owin.Hosting;
 using PoGoMITM.Base;
+using PoGoMITM.Base.Cache;
 using PoGoMITM.Base.Config;
 using PoGoMITM.Base.Logging;
 using PoGoMITM.Base.Models;
@@ -12,6 +14,7 @@ namespace PoGoMITM.Launcher
 {
     internal class Program
     {
+        private static Dictionary<string, RawContext> _contexts = new Dictionary<string, RawContext>();
         private static readonly ILog Logger = LogManager.GetLogger("Proxy");
 
         private static void Main()
@@ -54,6 +57,8 @@ namespace PoGoMITM.Launcher
 
         private static void Proxy_RequestSent(RawContext rawContext)
         {
+            ContextCache.RawContexts.TryAdd(rawContext.Guid, rawContext);
+
             NotificationHub.Send(rawContext.RequestUri.AbsoluteUri);
             try
             {
