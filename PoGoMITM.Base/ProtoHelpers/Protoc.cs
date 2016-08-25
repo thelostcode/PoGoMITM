@@ -72,7 +72,7 @@ namespace PoGoMITM.Base.ProtoHelpers
             process.ErrorDataReceived += (sender, args) =>
             {
                 if (args.Data != null) sb.AppendLine(args.Data);
-                tcs.SetResult(sb.ToString());
+                tcs.TrySetResult(sb.ToString());
             };
             process.OutputDataReceived += (sender, args) =>
             {
@@ -83,7 +83,7 @@ namespace PoGoMITM.Base.ProtoHelpers
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
                 process.WaitForExit(5000);
-                tcs.SetResult(sb.ToString());
+                tcs.TrySetResult(sb.ToString());
             }
             //process.StandardInput.BaseStream.Write(data,0,data.Length);
             //new BinaryWriter(process.StandardInput.BaseStream).Write(data);
