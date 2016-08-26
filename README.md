@@ -8,6 +8,8 @@ This project is a .net MITM proxy designed to read all the API messages sent bet
 
 ## Running for the first time
 
+It's important that you run it as Administrator. 
+
 If you are using the precompiled release package, just run PoGoMITM.exe. If you are using the source, you should already know what to do. :)
 
 It will create a root certificate and ask you if you want to install it. Click to Yes. After that, goto http://localhost:61222 and you should see the Web UI.
