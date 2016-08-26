@@ -12,5 +12,6 @@ namespace PoGoMITM.Launcher.ViewModels
         public string Guid { get; set; }
         public DateTime RequestTime { get; set; }
         public string RequestUri { get; set; }
+        public bool IsActive { get; set; }
     }
 }

@@ -110,16 +110,15 @@ namespace PoGoMITM.Base
                 _contexts.Add(uid.ToString(), context);
                 e.WebSession.Response.ResponseHeaders.Add("POGO_UID", new HttpHeader("POGO_UID", uid.ToString()));
 
-                if (AppConfig.HostsToDump.Contains(e.WebSession.Request.RequestUri.Host))
+
+                try
                 {
-                    try
-                    {
-                        context.RequestBody = await e.GetRequestBody();
-                    }
-                    catch (BodyNotFoundException)
-                    {
-                    }
+                    context.RequestBody = await e.GetRequestBody();
                 }
+                catch (BodyNotFoundException)
+                {
+                }
+
                 OnRequestSent(context);
             }
             catch (Exception ex)
@@ -152,17 +151,16 @@ namespace PoGoMITM.Base
 
                 context.ResponseHeaders = e.WebSession.Response.ResponseHeaders.Values.ToList();
 
-                if (AppConfig.HostsToDump.Contains(e.WebSession.Request.RequestUri.Host))
+
+                try
                 {
-                    try
-                    {
-                        context.ResponseBody = await e.GetResponseBody();
-                        await e.SetResponseBody(context.ResponseBody);
-                    }
-                    catch (BodyNotFoundException)
-                    {
-                    }
+                    context.ResponseBody = await e.GetResponseBody();
+                    await e.SetResponseBody(context.ResponseBody);
                 }
+                catch (BodyNotFoundException)
+                {
+                }
+
 
                 _contexts.Remove(context.Guid.ToString());
 

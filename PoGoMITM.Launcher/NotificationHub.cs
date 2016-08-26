@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNet.SignalR;
+using PoGoMITM.Launcher.ViewModels;
 
 namespace PoGoMITM.Launcher
 {
@@ -22,7 +23,10 @@ namespace PoGoMITM.Launcher
             HubContext.Clients.All.sendMessage(message);
         }
 
-        public static void SendRawContext
+        public static void SendRawContext(RawContextListItemViewModel vm)
+        {
+            HubContext.Clients.All.rc(vm);
+        }
     }
 
 }

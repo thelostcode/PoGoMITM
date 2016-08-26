@@ -1,3 +1,22 @@
-﻿body
-{
+﻿.jsonViewer {
+    overflow: auto;
+    overflow-x: hidden;
 }
+
+.jsonview {
+    font-size: 0.9em;
+}
+
+.rawContextsContainer {
+    overflow: auto;
+    overflow-x: hidden;
+}
+
+    .rawContextsContainer tbody {
+        cursor: pointer;
+        cursor: hand;
+    }
+
+    .rawContextsContainer tbody tr:hover {
+        background-color: lightyellow;
+    }

@@ -9,12 +9,12 @@ using PoGoMITM.Base.Cache;
 using PoGoMITM.Base.Config;
 using PoGoMITM.Base.Logging;
 using PoGoMITM.Base.Models;
+using PoGoMITM.Launcher.Models;
 
 namespace PoGoMITM.Launcher
 {
     internal class Program
     {
-        private static Dictionary<string, RawContext> _contexts = new Dictionary<string, RawContext>();
         private static readonly ILog Logger = LogManager.GetLogger("Proxy");
 
         private static void Main()
@@ -57,9 +57,6 @@ namespace PoGoMITM.Launcher
 
         private static void Proxy_RequestSent(RawContext rawContext)
         {
-            ContextCache.RawContexts.TryAdd(rawContext.Guid, rawContext);
-
-            NotificationHub.Send(rawContext.RequestUri.AbsoluteUri);
             try
             {
                 if (!AppConfig.HostsToDump.Contains(rawContext.RequestUri.Host)) return;
@@ -75,7 +72,12 @@ namespace PoGoMITM.Launcher
         {
             try
             {
+                ContextCache.RawContexts.TryAdd(rawContext.Guid, rawContext);
+                NotificationHub.SendRawContext(RawContextListModel.FromRawContext(rawContext));
+
                 if (!AppConfig.HostsToDump.Contains(rawContext.RequestUri.Host)) return;
+
+
                 Logger.Info(rawContext.RequestUri.AbsoluteUri + " Request Completed.");
 
                 if (AppConfig.DumpRaw)

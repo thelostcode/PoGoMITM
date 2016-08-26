@@ -73,8 +73,10 @@ namespace PoGoMITM.Base.Models
             }
             else
             {
-                result.RawDecodedRequestBody = Encoding.UTF8.GetString(result.RequestBody);
-                result.RawDecodedResponseBody = Encoding.UTF8.GetString(result.ResponseBody);
+                if (result.RequestBody != null)
+                    result.RawDecodedRequestBody = Encoding.UTF8.GetString(result.RequestBody);
+                if (result.ResponseBody != null)
+                    result.RawDecodedResponseBody = Encoding.UTF8.GetString(result.ResponseBody);
             }
 
 
