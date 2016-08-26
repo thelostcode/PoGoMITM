@@ -1,73 +1,73 @@
-﻿<!doctype html>
+﻿<!DOCTYPE html>
 <html>
-  <head>
+<head>
     <title>PoGO MITM Web Interface</title>
-    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-      <link rel="stylesheet" href="//cdn.rawgit.com/yesmeck/jquery-jsonview/master/dist/jquery.jsonview.css" type="text/css" />
-      <link href="~/css/main.css" rel="stylesheet" type="text/css" />
-    </head>
-  <body>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous" />
+    <link rel="stylesheet" href="//cdn.rawgit.com/yesmeck/jquery-jsonview/master/dist/jquery.jsonview.css" type="text/css" />
+    <link href="~/css/main.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
     <nav class="navbar navbar-default">
-      <div class="container-fluid">
-        <!-- Brand and toggle get grouped for better mobile display -->
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="/">PoGo MITM</a>
-        </div>
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="/">PoGo MITM</a>
+            </div>
 
-        <!-- Collect the nav links, forms, and other content for toggling -->
-        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-          <ul class="nav navbar-nav">
-            <li class="active">
-              <a href="#" onclick="return false">Live Feed</a>
-            </li>
-          </ul>
-          <ul class="nav navbar-nav navbar-right">
-            <li>
-              <a href="~/download/cert">Download Root Certificate</a>
-            </li>
-          </ul>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                    <li class="active">
+                        <a href="#" onclick="return false">Live Feed</a>
+                    </li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="~/download/cert">Download Root Certificate</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
         </div>
-        <!-- /.navbar-collapse -->
-      </div>
-      <!-- /.container-fluid -->
+        <!-- /.container-fluid -->
     </nav>
     <div class="container-fluid">
-      <div class="row">
-        <div class="col-xs-6 col-md-4 rawContextsContainer">
-          <table class="table table-condensed">
-            <thead>
-              <tr>
-                <th>Time</th>
-                <th>Uri</th>
-              </tr>
-            </thead>
-            <tbody data-bind="foreach: rawContextListItems">
-              <tr data-bind="click: function(data, event) { $parent.loadRequestDetails(data, event) }, css: {activeRow: IsActive() == true}">
-                <td data-bind="text: new Date(RequestTime).toLocaleTimeString()">Failed</td>
-                <td data-bind="text: Host">failed</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="col-xs-12 col-md-8">
-          <div class="jsonViewerToolbar clearfix">
-            <div class="btn-toolbar pull-right" role="toolbar">
-              <a data-bind="attr: {href: toolbarDownloadRawRequest}, css:{disabled: toolbarDownloadRawRequestEnabled() == false}" class="btn btn-default btn-sm btn-success">Download Raw Request</a>
-              <a data-bind="attr: {href: toolbarDownloadDecodedRequest}, css:{disabled: toolbarDownloadDecodedRequestEnabled() == false}" class="btn btn-default btn-sm btn-success">Download Decoded Request</a>
-              <a data-bind="attr: {href: toolbarDownloadRawResponse}, css:{disabled: toolbarDownloadRawResponseEnabled() == false}" class="btn btn-default btn-sm btn-success">Download Raw Response</a>
-              <a data-bind="attr: {href: toolbarDownloadDecodedResponse}, css:{disabled: toolbarDownloadDecodedResponseEnabled() == false}" class="btn btn-default btn-sm btn-success">Download Decoded Response</a>
-              <a data-bind="attr: {href: toolbarDownloadJson}, css:{disabled: toolbarDownloadJsonEnabled() == false}" class="btn btn-default btn-sm">Download Json</a>
+        <div class="row">
+            <div class="col-xs-6 col-md-4 rawContextsContainer">
+                <table class="table table-condensed">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Uri</th>
+                        </tr>
+                    </thead>
+                    <tbody data-bind="foreach: rawContextListItems">
+                        <tr data-bind="click: function(data, event) { $parent.loadRequestDetails(data, event) }, css: {activeRow: IsActive() == true}">
+                            <td data-bind="text: new Date(RequestTime).toLocaleTimeString()">Failed</td>
+                            <td data-bind="text: Host">failed</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-          </div>
-          <div class="jsonViewer"></div>
+            <div class="col-xs-12 col-md-8">
+                <div class="jsonViewerToolbar clearfix">
+                    <div class="btn-toolbar pull-right" role="toolbar">
+                        <a data-bind="attr: {href: toolbarDownloadRawRequest}, css:{disabled: toolbarDownloadRawRequestEnabled() == false}" class="btn btn-default btn-sm btn-success">Download Raw Request</a>
+                        <a data-bind="attr: {href: toolbarDownloadDecodedRequest}, css:{disabled: toolbarDownloadDecodedRequestEnabled() == false}" class="btn btn-default btn-sm btn-success">Download Decoded Request</a>
+                        <a data-bind="attr: {href: toolbarDownloadRawResponse}, css:{disabled: toolbarDownloadRawResponseEnabled() == false}" class="btn btn-default btn-sm btn-success">Download Raw Response</a>
+                        <a data-bind="attr: {href: toolbarDownloadDecodedResponse}, css:{disabled: toolbarDownloadDecodedResponseEnabled() == false}" class="btn btn-default btn-sm btn-success">Download Decoded Response</a>
+                        <a data-bind="attr: {href: toolbarDownloadJson}, css:{disabled: toolbarDownloadJsonEnabled() == false}" class="btn btn-default btn-sm">Download Json</a>
+                    </div>
+                </div>
+                <div class="jsonViewer"></div>
+            </div>
         </div>
-      </div>
     </div>
     <script src="//code.jquery.com/jquery-3.1.0.min.js" integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s=" crossorigin="anonymous"></script>
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
@@ -78,10 +78,10 @@
     <script src="~/js/main.js" type="text/javascript"></script>
     <script src="~/js/buffer.js" type="text/javascript"></script>
     <script type="text/javascript">
-      $(function() {
-      var currentItems=@Model.ContextListAsJson;
-      pogoMITM.models.rawContextsList.addRange(currentItems);
-      });
+        $(function() {
+            var currentItems=@Model.ContextListAsJson;
+            pogoMITM.models.rawContextsList.addRange(currentItems);
+        });
     </script>
-  </body>
+</body>
 </html>
