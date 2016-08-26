@@ -1,8 +1,8 @@
-﻿<!doctype html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     <title>PoGO MITM Web Interface</title>
-    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous" />
     <link rel="stylesheet" href="//cdn.rawgit.com/yesmeck/jquery-jsonview/master/dist/jquery.jsonview.css" type="text/css" />
     <link href="~/css/main.css" rel="stylesheet" type="text/css" />
 </head>
@@ -23,13 +23,19 @@
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
-                    <li class="active"><a href="#" onclick="return false">Live Feed</a></li>
+                    <li class="active">
+                        <a href="#" onclick="return false">Live Feed</a>
+                    </li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
-                    <li><a href="~/download/cert">Download Root Certificate</a></li>
+                    <li>
+                        <a href="~/download/cert">Download Root Certificate</a>
+                    </li>
                 </ul>
-            </div><!-- /.navbar-collapse -->
-        </div><!-- /.container-fluid -->
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container-fluid -->
     </nav>
     <div class="container-fluid">
         <div class="row">
