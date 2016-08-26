@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
+using System.Linq;
 using PoGoMITM.Base.Dumpers;
 
 namespace PoGoMITM.Base.Config
@@ -9,11 +10,13 @@ namespace PoGoMITM.Base.Config
     public static class AppConfig
     {
         private static readonly int _bindPort;
-        private static bool _dumpRaw;
-        private static bool _dumpProcessed;
+        private static readonly int _webServerPort;
+        private static readonly bool _dumpRaw;
+        private static readonly bool _dumpProcessed;
 
-        public static string BindIp { get; private set; }
-        public static int BindPort => _bindPort;
+        public static string ProxyIp { get; private set; }
+        public static int ProxyPort => _bindPort;
+        public static int WebServerPort => _webServerPort;
         public static string RootCertificateName { get; private set; }
         public static string RootCertificateIssuer { get; private set; }
         public static string LogsFolder { get; private set; }
@@ -28,10 +31,14 @@ namespace PoGoMITM.Base.Config
 
         static AppConfig()
         {
-            BindIp = ConfigurationManager.AppSettings["BindIp"] ?? "0.0.0.0";
-            if (!int.TryParse(ConfigurationManager.AppSettings["BindPort"], out _bindPort))
+            ProxyIp = ConfigurationManager.AppSettings["ProxyIp"] ?? "0.0.0.0";
+            if (!int.TryParse(ConfigurationManager.AppSettings["ProxyPort"], out _bindPort))
             {
                 _bindPort = 61221;
+            }
+            if (!int.TryParse(ConfigurationManager.AppSettings["WebServerPort"], out _webServerPort))
+            {
+                _bindPort = 61222;
             }
             RootCertificateName = ConfigurationManager.AppSettings["RootCertificateName"] ?? "POGO Proxy.Net CA";
             RootCertificateIssuer = ConfigurationManager.AppSettings["RootCertificateIssuer"] ?? "POGO Proxy";
@@ -64,7 +71,7 @@ namespace PoGoMITM.Base.Config
             if (!string.IsNullOrWhiteSpace(dumpers))
             {
                 var dumpersArr = dumpers.Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (var dumper in dumpersArr)
+                foreach (var dumper in dumpersArr.Select(d => d.Trim()))
                 {
                     switch (dumper.ToLowerInvariant())
                     {
@@ -82,7 +89,7 @@ namespace PoGoMITM.Base.Config
             var hosts = ConfigurationManager.AppSettings["HostsToDump"];
             if (!string.IsNullOrWhiteSpace(hosts))
             {
-                HostsToDump = new HashSet<string>(hosts.Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries));
+                HostsToDump = new HashSet<string>(hosts.Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries).Select(h => h.Trim()));
             }
         }
 

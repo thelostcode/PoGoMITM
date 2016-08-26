@@ -1,0 +1,29 @@
+﻿.jsonViewer {
+    overflow: auto;
+    overflow-x: hidden;
+}
+
+.jsonview {
+    font-size: 0.9em;
+}
+
+.jsonViewer {
+    margin-top: 5px;
+}
+
+.rawContextsContainer {
+    overflow: auto;
+}
+
+    .rawContextsContainer tbody {
+        cursor: pointer;
+        cursor: hand;
+    }
+
+    .rawContextsContainer tbody tr:hover {
+        background-color: lightyellow;
+    }
+
+        .rawContextsContainer tbody tr.activeRow {
+        background-color: yellow;
+    }
