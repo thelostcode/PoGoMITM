@@ -20,6 +20,8 @@ Then open a web browser on your phone and enter http://proxyip:61222. You should
 
 You also need the PoGo APK with Certificate Pinning disabled in order to run PoGo through the proxy. You can download it here: https://github.com/rastapasta/pokemon-go-mitm/issues/69#issuecomment-238457389
 
+See https://github.com/rastapasta/pokemon-go-mitm#setting-up-your-device for more detailed info on setting up your phone.
+
 ## Settings
 
 All the settings are located in PoGoMITM.exe.config file (App.Config if you are using the source code)
