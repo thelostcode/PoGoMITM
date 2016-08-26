@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Nancy;
+using Nancy.ModelBinding;
 using Nancy.Owin;
 using Newtonsoft.Json;
 using PoGoMITM.Base.Cache;
@@ -14,6 +15,7 @@ using PoGoMITM.Base.Config;
 using PoGoMITM.Base.Models;
 using PoGoMITM.Base.Utils;
 using PoGoMITM.Launcher.Models;
+using POGOProtos.Networking.Envelopes;
 
 namespace PoGoMITM.Launcher.Modules
 {
@@ -93,6 +95,26 @@ namespace PoGoMITM.Launcher.Modules
                 }
                 return new NotFoundResponse();
             };
+
+            Post["/details/signature"] = x =>
+            {
+                try
+                {
+                    var post = this.Bind<DecryptedSignature>();
+                    var trimmed = post.Bytes.Substring(1);
+                    trimmed = trimmed.Substring(0, trimmed.Length - 1);
+                    var res = trimmed.Split(',');
+                    var arr = new byte[res.Length];
+                    arr = res.Select(byte.Parse).ToArray();
+
+                    var signature = Signature.Parser.ParseFrom(arr);
+                    return Response.AsText(JsonConvert.SerializeObject(new { success = true, signature = signature }), "text/json");
+                }
+                catch (Exception ex)
+                {
+                    return Response.AsText(JsonConvert.SerializeObject(new { success = false, exception = ex }), "text/json");
+                }
+            };
         }
 
         private static async Task<RequestContext> GetRequestContext(string guid)
@@ -111,5 +133,11 @@ namespace PoGoMITM.Launcher.Modules
             }
             return null;
         }
+
+    }
+
+    public class DecryptedSignature
+    {
+        public string Bytes { get; set; }
     }
 }

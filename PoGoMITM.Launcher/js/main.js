@@ -7,7 +7,7 @@ pogoMITM.models = new function () {
     function RawContextsList() {
         var self = this;
         var previousActiveItem;
-        
+
         self.toolbarDownloadRawRequest = ko.observable("#");
         self.toolbarDownloadRawRequestEnabled = ko.observable(false);
         self.toolbarDownloadDecodedRequest = ko.observable("#");
@@ -47,11 +47,38 @@ pogoMITM.models = new function () {
             })
                 .done(function (data) {
                     if (data) {
+                        try {
+
+                            if (data.RequestEnvelope &&
+                                data.RequestEnvelope.Unknown6 &&
+                                data.RequestEnvelope.Unknown6.length > 0 &&
+                                data.RequestEnvelope.Unknown6[0].Unknown2 &&
+                                data.RequestEnvelope.Unknown6[0].Unknown2.EncryptedSignature &&
+                                data.RequestEnvelope.Unknown6[0].Unknown2.EncryptedSignature.length > 0) {
+                                var test = p.d(data.RequestEnvelope.Unknown6[0].Unknown2.EncryptedSignature);
+                                var test1 = new Uint8Array(test);
+                                var test2 = Array.from(test1);
+
+                                $.ajax({
+                                    url: "/details/signature",
+                                    data: { Bytes: JSON.stringify(test2) },
+                                    method: "POST"
+                                }).done(function (result) {
+                                    if (result && result.success) {
+                                        data.DecryptedSignature = result.signature;
+                                        console.log(result.signature);
+                                        $(".jsonViewer").JSONView(data, { collapsed: true });
+                                    }
+                                });
+                            }
+                        } catch (e) {
+
+                        }
                         if (previousActiveItem) previousActiveItem.IsActive(false);
                         item.IsActive(true);
                         previousActiveItem = item;
                         $(".jsonViewer").JSONView(data, { collapsed: true });
-                        if (data.RequestBodyLength>0) {
+                        if (data.RequestBodyLength > 0) {
                             self.toolbarDownloadRawRequest("/download/request/raw/" + item.Guid);
                             self.toolbarDownloadRawRequestEnabled(true);
                             self.toolbarDownloadDecodedRequest("/download/request/decoded/" + item.Guid);
@@ -60,7 +87,7 @@ pogoMITM.models = new function () {
                             self.toolbarDownloadRawRequestEnabled(false);
                             self.toolbarDownloadDecodedRequestEnabled(false);
                         }
-                        if (data.ResponseBodyLength>0) {
+                        if (data.ResponseBodyLength > 0) {
                             self.toolbarDownloadRawResponse("/download/response/raw/" + item.Guid);
                             self.toolbarDownloadRawResponseEnabled(true);
                             self.toolbarDownloadDecodedResponse("/download/response/decoded/" + item.Guid);
