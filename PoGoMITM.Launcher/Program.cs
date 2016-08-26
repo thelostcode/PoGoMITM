@@ -4,6 +4,7 @@ using log4net;
 using log4net.Core;
 using Microsoft.AspNet.SignalR.Hubs;
 using Microsoft.Owin.Hosting;
+using Nancy;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using PoGoMITM.Base;
@@ -21,6 +22,7 @@ namespace PoGoMITM.Launcher
 
         private static void Main()
         {
+            StaticConfiguration.DisableErrorTraces = false;
             JsonConvert.DefaultSettings = () =>
             {
                 var settings = new JsonSerializerSettings();
