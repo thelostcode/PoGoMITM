@@ -1,41 +1,49 @@
-# PoGo-Proxy.NET
+# PoGoMITM
 
 This project is a .net MITM proxy designed to read all the API messages sent between the Pokemon Go device and the Pokemon Go servers. 
 # Usage
 
-## Setting Up
+## Running for the first time
 
-In order to get this up a running, you have to run through a couple of steps:
+If you are using the precompiled release package, just run PoGoMITM.exe. If you are using the source, you should already know what to do. :)
 
-* First modify the Ip settings in the ProxyController.cs file
-  * Find your local ip address and set that as the string Ip at the top of the ProxyController class (By default, it's binding all local ips)
-  * Keep the port as is or update the port to whatever you want
+It will create a root certificate and ask you if you want to install it. Click to Yes. After that, goto http://localhost:61222 and you should see the Web UI.
 
-* Then, run the project once to generate the CA certificate. This will add the certificate to your computer. You also need to export this certificate and add it to your android device.
+## Setting up your Android Phone to use the proxy
 
-* Set your Pokemon Go device to use the proxy config
+After making sure that the Proxy and Web UI running (see the console output for detailed info), go to your Phone Settings / WiFi, find your WiFi connection. Tap on it and wait a bit till you see the menu with Modify Network option. In Modify Network, you should see Advanced options, and a Proxy option under it. Select Manual as Proxy, then enter the ip address of your Proxy Server (the local ip of the computer you are running the Proxy server) and 61221 as port.
 
-* Go to Settings/Wifi, find your Wifi connection and modify it to use the proxy ip / port
+Then open a web browser on your phone and enter http://proxyip:61222. You should see the Web UI. There click to Download Root Certificate link at the top right corner and follow the instructions to install the certificate.
 
-* Go to http://mitm.it/install-cert on your mobile and click to "Download Certificate". If it fails to install, please download the certificate and manually add it to your WIFI settings.
+You also need the PoGo APK with Certificate Pinning disabled in order to run PoGo through the proxy. You can download it here.
+
+## Settings
+
+All the settings are located in PoGoMITM.exe.config file (App.Config if you are using the source code)
+
+```
+  <connectionStrings>
+    <add name="mongodb" connectionString="mongodb://127.0.0.1/PoGoMITM?maxPoolSize=1000&amp;minPoolSize=100" />
+  </connectionStrings>
+  <appSettings>
+    <add key="ProxyIp" value="0.0.0.0" />
+    <add key="ProxyPort" value="61221" />
+    <add key="WebServerPort" value="61222" />
+    <add key="RootCertificateName" value="PoGoMITM CA" />
+    <add key="RootCertificateIssuer" value="PoGoMITM" />
+    <add key="DumpsFolder" value="Dumps" />
+    <add key="LogsFolder" value="Logs" />
+    <add key="TempFolder" value="Temp" />
+    <!-- Comma separated list of dumpers. Valid values are FileDumper,MongoDumper -->
+    <add key="DataDumpers" value="MongoDumper" />
+    <add key="DumpRaw" value="false" />
+    <add key="DumpProcessesed" value="false" />
+    <add key="HostsToDump" value="sso.pokemon.com,pgorelease.nianticlabs.com,bootstrap.upsight-api.com,batch.upsight-api.com" />
+    <!-- Do not change the values below -->
+    <add key="owin:HandleAllRequests" value="true" />
+    <add key="webPages:Enabled" value="false" />
+  </appSettings>
+```
 
 
-## Getting started
-
-Once you have everything set up, just start up the sample project on your host device, then open the Pokemon Go app on your phone/tablet. You should start to see the api requests and responses populate the console window. More detailed logs are created in the logs folder.
-
-## Certificate Pinning
-
-As of version 0.31, Niantic added certificate pinning to Pokemon Go. In order to use this MITM proxy, you have to do a little extra work. You can either modify the apk to accept other certificates [as shown here](https://eaton-works.com/2016/07/31/reverse-engineering-and-removing-pokemon-gos-certificate-pinning/), or you can use something like XPosed to get around the certificate pinning on the fly.
-
-In case of any problems, please follow instructions on https://github.com/rastapasta/pokemon-go-mitm
-
-# Dependencies
-
-This project is built in Visual Studio 2015 with the following nuget packages:
-* POGOProtos v1.7.0 (https://www.nuget.org/packages/POGOProtos/)
-* DotNetZip v1.9.8
-* Google.Protobuf v3.0.0
-* Newtonsoft.Json v9.0.1
-* Titanium.Web.Proxy v2.3000.185 TBulbaDB Fork (https://github.com/TBulbaDB/Titanium-Web-Proxy)
 
