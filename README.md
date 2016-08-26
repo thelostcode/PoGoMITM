@@ -18,7 +18,7 @@ After making sure that the Proxy and Web UI running (see the console output for 
 
 Then open a web browser on your phone and enter http://proxyip:61222. You should see the Web UI. There click to Download Root Certificate link at the top right corner and follow the instructions to install the certificate.
 
-You also need the PoGo APK with Certificate Pinning disabled in order to run PoGo through the proxy. You can download it here.
+You also need the PoGo APK with Certificate Pinning disabled in order to run PoGo through the proxy. You can download it here: https://github.com/rastapasta/pokemon-go-mitm/issues/69#issuecomment-238457389
 
 ## Settings
 
