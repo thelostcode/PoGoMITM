@@ -4,6 +4,8 @@ using log4net;
 using log4net.Core;
 using Microsoft.AspNet.SignalR.Hubs;
 using Microsoft.Owin.Hosting;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using PoGoMITM.Base;
 using PoGoMITM.Base.Cache;
 using PoGoMITM.Base.Config;
@@ -19,6 +21,13 @@ namespace PoGoMITM.Launcher
 
         private static void Main()
         {
+            JsonConvert.DefaultSettings = () =>
+            {
+                var settings = new JsonSerializerSettings();
+                settings.Converters.Add(new StringEnumConverter { CamelCaseText = true });
+                return settings;
+            };
+
             Log4NetHelper.AddAppender(Log4NetHelper.ConsoleAppender(Level.All));
             Log4NetHelper.AddAppender(Log4NetHelper.FileAppender(Level.All));
 
@@ -32,7 +41,7 @@ namespace PoGoMITM.Launcher
 
             Logger.Info($"Proxy is started on {AppConfig.ProxyIp}:{AppConfig.ProxyPort}");
 
-            var webApp = WebApp.Start<Startup>($"http://localhost:{AppConfig.WebServerPort}");
+            var webApp = WebApp.Start<Startup>($"http://*:{AppConfig.WebServerPort}");
             Logger.Info($"Web Server is started on http://localhost:{AppConfig.WebServerPort}");
 
             Console.WriteLine();
@@ -72,10 +81,11 @@ namespace PoGoMITM.Launcher
         {
             try
             {
-                ContextCache.RawContexts.TryAdd(rawContext.Guid, rawContext);
-                NotificationHub.SendRawContext(RawContextListModel.FromRawContext(rawContext));
 
                 if (!AppConfig.HostsToDump.Contains(rawContext.RequestUri.Host)) return;
+
+                ContextCache.RawContexts.TryAdd(rawContext.Guid, rawContext);
+                NotificationHub.SendRawContext(RequestContextListModel.FromRawContext(rawContext));
 
 
                 Logger.Info(rawContext.RequestUri.AbsoluteUri + " Request Completed.");

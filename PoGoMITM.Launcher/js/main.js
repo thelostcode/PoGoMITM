@@ -2,11 +2,24 @@
 
 pogoMITM.models = new function () {
     this.rawContextsList = new RawContextsList();
-    ko.applyBindings(this.rawContextsList);
+    ko.applyBindings(this.rawContextsList, document.body);
 
     function RawContextsList() {
         var self = this;
         var previousActiveItem;
+        
+        self.toolbarDownloadRawRequest = ko.observable("#");
+        self.toolbarDownloadRawRequestEnabled = ko.observable(false);
+        self.toolbarDownloadDecodedRequest = ko.observable("#");
+        self.toolbarDownloadDecodedRequestEnabled = ko.observable(false);
+
+        self.toolbarDownloadRawResponse = ko.observable("#");
+        self.toolbarDownloadRawResponseEnabled = ko.observable(false);
+        self.toolbarDownloadDecodedResponse = ko.observable("#");
+        self.toolbarDownloadDecodedResponseEnabled = ko.observable(false);
+
+        self.toolbarDownloadJson = ko.observable("#");
+        self.toolbarDownloadJsonEnabled = ko.observable(false);
 
         self.rawContextListItems = ko.observableArray([]);
 
@@ -19,10 +32,10 @@ pogoMITM.models = new function () {
             });
         };
 
-        self.addRange = function(listOfItems) {
+        self.addRange = function (listOfItems) {
             for (var i = 0; i < listOfItems.length; i++) {
                 var item = listOfItems[i];
-                self.addItem(item.Guid, item.RequestTime, item.RequestUri);
+                self.addItem(item.Guid, item.RequestTime, item.Host);
             }
         };
 
@@ -38,10 +51,41 @@ pogoMITM.models = new function () {
                         item.IsActive(true);
                         previousActiveItem = item;
                         $(".jsonViewer").JSONView(data, { collapsed: true });
+                        if (data.RequestBodyLength>0) {
+                            self.toolbarDownloadRawRequest("/download/request/raw/" + item.Guid);
+                            self.toolbarDownloadRawRequestEnabled(true);
+                            self.toolbarDownloadDecodedRequest("/download/request/decoded/" + item.Guid);
+                            self.toolbarDownloadDecodedRequestEnabled(true);
+                        } else {
+                            self.toolbarDownloadRawRequestEnabled(false);
+                            self.toolbarDownloadDecodedRequestEnabled(false);
+                        }
+                        if (data.ResponseBodyLength>0) {
+                            self.toolbarDownloadRawResponse("/download/response/raw/" + item.Guid);
+                            self.toolbarDownloadRawResponseEnabled(true);
+                            self.toolbarDownloadDecodedResponse("/download/response/decoded/" + item.Guid);
+                            self.toolbarDownloadDecodedResponseEnabled(true);
+                        } else {
+                            self.toolbarDownloadRawResponseEnabled(false);
+                            self.toolbarDownloadDecodedResponseEnabled(false);
+
+                        }
+                        self.toolbarDownloadJson("/download/json/" + item.Guid);
+                        self.toolbarDownloadJsonEnabled(true);
+                    } else {
+                        $(".jsonViewer").html("An error occured");
+                        self.toolbarDownloadRawRequestEnabled(false);
+                        self.toolbarDownloadDecodedRequestEnabled(false);
+                        self.toolbarDownloadRawResponseEnabled(false);
+                        self.toolbarDownloadDecodedResponseEnabled(true);
+                        self.toolbarDownloadJsonEnabled(false);
                     }
                 })
                 .fail(function () {
                     $(".jsonViewer").html("An error occured");
+                    self.toolbarDownloadRawRequestEnabled(false);
+                    self.toolbarDownloadRawResponseEnabled(false);
+                    self.toolbarDownloadJsonEnabled(false);
                 });
         }
     }
@@ -56,7 +100,7 @@ pogoMITM.signalR = {
         };
         notifications.client.rc = function (vm) {
             //console.log(vm);
-            pogoMITM.models.rawContextsList.addItem(vm.Guid, vm.RequestTime, vm.RequestUri);
+            pogoMITM.models.rawContextsList.addItem(vm.Guid, vm.RequestTime, vm.Host);
         };
         $.connection.hub.start()
             .done(function () {
@@ -75,7 +119,7 @@ $(function () {
         var windowHeight = $(window).height();
         var contentHeight = windowHeight - $(".navbar").height() - 30;
         $(".rawContextsContainer").height(contentHeight);
-        $(".jsonViewer").height(contentHeight);
+        $(".jsonViewer").height(contentHeight - 40);
     }
 
     $(window).on("resize", resizeRawContextsContainer);

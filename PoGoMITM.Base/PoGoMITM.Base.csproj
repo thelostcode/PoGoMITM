@@ -58,10 +58,6 @@
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="POGOProtos, Version=1.7.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\POGOProtos.1.7.0\lib\net45\POGOProtos.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
@@ -84,17 +80,34 @@
     <Compile Include="Dumpers\IDataDumper.cs" />
     <Compile Include="Logging\Log4NetHelper.cs" />
     <Compile Include="Models\MessageBlock.cs" />
-    <Compile Include="Models\PoGoWebRequest.cs" />
-    <Compile Include="Models\PoGoWebSession.cs" />
     <Compile Include="Models\RawContext.cs" />
     <Compile Include="Models\RequestContext.cs" />
     <Compile Include="MongoDB\DictionaryRepresentationConvention.cs" />
     <Compile Include="MongoDB\MongoHelper.cs" />
+    <Compile Include="POGOProtos\POGOProtosData.cs" />
+    <Compile Include="POGOProtos\POGOProtosDataBattle.cs" />
+    <Compile Include="POGOProtos\POGOProtosDataCapture.cs" />
+    <Compile Include="POGOProtos\POGOProtosDataGym.cs" />
+    <Compile Include="POGOProtos\POGOProtosDataLogs.cs" />
+    <Compile Include="POGOProtos\POGOProtosDataPlayer.cs" />
+    <Compile Include="POGOProtos\POGOProtosEnums.cs" />
+    <Compile Include="POGOProtos\POGOProtosInventory.cs" />
+    <Compile Include="POGOProtos\POGOProtosInventoryItem.cs" />
+    <Compile Include="POGOProtos\POGOProtosMap.cs" />
+    <Compile Include="POGOProtos\POGOProtosMapFort.cs" />
+    <Compile Include="POGOProtos\POGOProtosMapPokemon.cs" />
+    <Compile Include="POGOProtos\POGOProtosNetworkingEnvelopes.cs" />
+    <Compile Include="POGOProtos\POGOProtosNetworkingRequests.cs" />
+    <Compile Include="POGOProtos\POGOProtosNetworkingRequestsMessages.cs" />
+    <Compile Include="POGOProtos\POGOProtosNetworkingResponses.cs" />
+    <Compile Include="POGOProtos\POGOProtosSettings.cs" />
+    <Compile Include="POGOProtos\POGOProtosSettingsMaster.cs" />
+    <Compile Include="POGOProtos\POGOProtosSettingsMasterItem.cs" />
+    <Compile Include="POGOProtos\POGOProtosSettingsMasterPokemon.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ProtoHelpers\Protoc.cs" />
-    <Compile Include="ProxyController.cs" />
     <Compile Include="ProxyHandler.cs" />
-    <Compile Include="RequestHandledEventArgs.cs" />
+    <Compile Include="Utils\CertificateHelper.cs" />
     <Compile Include="Utils\DateHelpers.cs" />
     <Compile Include="Utils\FileAsync.cs" />
   </ItemGroup>

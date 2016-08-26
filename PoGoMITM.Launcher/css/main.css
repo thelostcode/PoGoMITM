@@ -7,9 +7,12 @@
     font-size: 0.9em;
 }
 
+.jsonViewer {
+    margin-top: 5px;
+}
+
 .rawContextsContainer {
     overflow: auto;
-    overflow-x: hidden;
 }
 
     .rawContextsContainer tbody {
@@ -19,4 +22,8 @@
 
     .rawContextsContainer tbody tr:hover {
         background-color: lightyellow;
+    }
+
+        .rawContextsContainer tbody tr.activeRow {
+        background-color: yellow;
     }

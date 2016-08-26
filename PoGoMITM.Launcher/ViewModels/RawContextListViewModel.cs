@@ -7,11 +7,12 @@ using PoGoMITM.Base.Models;
 
 namespace PoGoMITM.Launcher.ViewModels
 {
-    public class RawContextListItemViewModel
+    public class RequestContextListItemViewModel
     {
         public string Guid { get; set; }
         public DateTime RequestTime { get; set; }
-        public string RequestUri { get; set; }
-        public bool IsActive { get; set; }
+        public string Host { get; set; }
+        public List<string> RequestTypes { get; set; }
+
     }
 }

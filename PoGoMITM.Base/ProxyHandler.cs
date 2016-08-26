@@ -73,29 +73,6 @@ namespace PoGoMITM.Base
             try
             {
 
-                switch (e.WebSession.Request.RequestUri.PathAndQuery)
-                {
-                    case "/install-cert":
-
-                        await e.Ok("<html><head><title>Certificate Installation</title></head><body><div style=\"text-align: center; margin-top: 100px;\"><h1><a href=/install-cert-android>Download Certificate</a></h1></div></body></html>");
-                        return;
-                    case "/install-cert-android":
-                        try
-                        {
-                            var cert = GetCertificateFromStore();
-                            var pem = ConvertToPem(cert);
-                            var headers = new Dictionary<string, HttpHeader>();
-                            headers.Add("Content-Type", new HttpHeader("Content-Type", "application/x-x509-ca-cert"));
-                            headers.Add("Content-Disposition", new HttpHeader("Content-Disposition", $"inline; filename={AppConfig.RootCertificateName}.cer"));
-                            await e.Ok(pem, headers);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogException(ex);
-                        }
-                        return;
-                }
-
                 _logger.Debug($"{e.WebSession.Request.RequestUri.AbsoluteUri} Request Initialized");
 
 
@@ -185,43 +162,7 @@ namespace PoGoMITM.Base
             RequestSent?.Invoke(context);
         }
 
-        private static string ConvertToPem(X509Certificate2 cert)
-        {
-            if (cert == null)
-                throw new ArgumentNullException(nameof(cert));
 
-            var base64 = Convert.ToBase64String(cert.RawData).Trim();
-
-            var pem = "-----BEGIN CERTIFICATE-----" + Environment.NewLine;
-
-            do
-            {
-                pem += base64.Substring(0, 64) + Environment.NewLine;
-                base64 = base64.Remove(0, 64);
-            }
-            while (base64.Length > 64);
-
-            pem += base64 + Environment.NewLine + "-----END CERTIFICATE-----";
-
-            return pem;
-        }
-
-        private static X509Certificate2 GetCertificateFromStore()
-        {
-
-            // Get the certificate store for the current user.
-            var store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
-            try
-            {
-                store.Open(OpenFlags.ReadOnly);
-                return store.Certificates.Cast<X509Certificate2>().FirstOrDefault(cert => cert.SubjectName.Name != null && cert.SubjectName.Name.Contains(AppConfig.RootCertificateName));
-            }
-            finally
-            {
-                store.Close();
-            }
-
-        }
 
 
         private static Task ProxyServer_ClientCertificateSelectionCallback(object arg1, Titanium.Web.Proxy.EventArguments.CertificateSelectionEventArgs e)

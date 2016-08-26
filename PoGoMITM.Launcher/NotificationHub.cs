@@ -23,7 +23,7 @@ namespace PoGoMITM.Launcher
             HubContext.Clients.All.sendMessage(message);
         }
 
-        public static void SendRawContext(RawContextListItemViewModel vm)
+        public static void SendRawContext(RequestContextListItemViewModel vm)
         {
             HubContext.Clients.All.rc(vm);
         }

@@ -10,26 +10,31 @@ using PoGoMITM.Launcher.ViewModels;
 
 namespace PoGoMITM.Launcher.Models
 {
-    public class RawContextListModel
+    public class RequestContextListModel
     {
-        private static RawContextListModel _instance;
+        private static RequestContextListModel _instance;
 
-        public static RawContextListItemViewModel FromRawContext(RawContext context)
+        public static RequestContextListItemViewModel FromRawContext(RawContext context)
         {
-            var model=new RawContextListItemViewModel();
-            model.Guid = context.Guid.ToString();
-            model.RequestTime = context.RequestTime;
-            model.RequestUri = context.RequestUri.Host;
+            RequestContext requestContext = null;
+            Task.Run(async () => { requestContext = await RequestContext.GetInstance(context); }).Wait();
+            var model = new RequestContextListItemViewModel();
+            if (requestContext != null)
+            {
+                model.Guid = requestContext.Guid.ToString();
+                model.RequestTime = requestContext.RequestTime;
+                model.Host = requestContext.RequestUri.Host;
+            }
             return model;
         }
 
-        public List<RawContextListItemViewModel> ContextList
+        public List<RequestContextListItemViewModel> ContextList
         {
             get { return ContextCache.RawContexts.Values.OrderBy(c => c.RequestTime).Select(FromRawContext).ToList(); }
         }
 
         public string ContextListAsJson => JsonConvert.SerializeObject(ContextList);
 
-        public static RawContextListModel Instance => _instance ?? (_instance = new RawContextListModel());
+        public static RequestContextListModel Instance => _instance ?? (_instance = new RequestContextListModel());
     }
 }

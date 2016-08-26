@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
+using System.Linq;
 using PoGoMITM.Base.Dumpers;
 
 namespace PoGoMITM.Base.Config
@@ -70,7 +71,7 @@ namespace PoGoMITM.Base.Config
             if (!string.IsNullOrWhiteSpace(dumpers))
             {
                 var dumpersArr = dumpers.Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (var dumper in dumpersArr)
+                foreach (var dumper in dumpersArr.Select(d => d.Trim()))
                 {
                     switch (dumper.ToLowerInvariant())
                     {
@@ -88,7 +89,7 @@ namespace PoGoMITM.Base.Config
             var hosts = ConfigurationManager.AppSettings["HostsToDump"];
             if (!string.IsNullOrWhiteSpace(hosts))
             {
-                HostsToDump = new HashSet<string>(hosts.Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries));
+                HostsToDump = new HashSet<string>(hosts.Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries).Select(h => h.Trim()));
             }
         }
 
